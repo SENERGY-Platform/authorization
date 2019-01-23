@@ -1,0 +1,166 @@
+{
+	"id": "bd2054ee-e479-8c68-f2dc-dbffae826968",
+	"name": "tests_ladon",
+	"description": "",
+	"order": [
+		"a28268c6-fd76-bf6f-e8dd-3dfdc040e948",
+		"72d703c0-7479-1d19-ddb0-9ab45abecd4c",
+		"e85c509f-8161-0265-b73f-caaffc93e209",
+		"70296351-c220-1bad-f643-087192bbbced",
+		"3e10eb69-d8c2-4da4-f1c4-6089230346ae"
+	],
+	"folders": [],
+	"folders_order": [],
+	"timestamp": 1516112667781,
+	"owner": 0,
+	"public": false,
+	"requests": [
+		{
+			"id": "3e10eb69-d8c2-4da4-f1c4-6089230346ae",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8002/access",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": "pm.test(\"Correct Result message\", function () {\n    var jsonData = pm.response.json();\n    pm.expect(jsonData[\"Result\"]).to.eql(true);\n});\n\npm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1516712830554,
+			"name": "localhost:8002/access (regex)",
+			"description": "",
+			"collectionId": "bd2054ee-e479-8c68-f2dc-dbffae826968",
+			"responses": [],
+			"rawModeData": "{\n\t\"Subject\": \"regex_user\",\n\t\"Action\": \"GET\",\n\t\"Resource\": \"/iot-repo/5/10\"\n}"
+		},
+		{
+			"id": "70296351-c220-1bad-f643-087192bbbced",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8002/policies",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": "pm.test(\"Result is correct\", function () {\n    var jsonData = pm.response.json();\n    pm.expect(jsonData[\"Result\"]).to.eql(\"Policy created successfully\");\n});\n\npm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1516712921460,
+			"name": "localhost:8002/policies (regex)",
+			"description": "",
+			"collectionId": "bd2054ee-e479-8c68-f2dc-dbffae826968",
+			"responses": [],
+			"rawModeData": "{\n\t\"Subjects\": [\"regex_user\"],\n\t\"Actions\": [\"GET\"],\n\t\"Resources\": [\"<^\\/iot-repo>\"],\n\t\"Effect\": \"allow\"\n}"
+		},
+		{
+			"id": "72d703c0-7479-1d19-ddb0-9ab45abecd4c",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8002/policies",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"tests": "pm.test(\"Result message is correct\", function () {\n    var jsonData = pm.response.json();\n    pm.expect(jsonData[\"Result\"]).to.eql(\"Policy not created successfully\");\n});\n\npm.test(\"Error message is correct\", function () {\n    var jsonData = pm.response.json();\n    pm.expect(jsonData[\"Error\"]).to.eql(\"Policy exists\");\n});\n\n",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1516712832903,
+			"name": "localhost:8002/policies",
+			"description": "",
+			"collectionId": "bd2054ee-e479-8c68-f2dc-dbffae826968",
+			"responses": [],
+			"rawModeData": "{\n\t\"ID\": \"user-resource\",\n\t\"Subjects\": [\"user\"],\n\t\"Actions\": [\"GET\"],\n\t\"Resources\": [\"resource\"],\n\t\"Effect\": \"allow\"\n}"
+		},
+		{
+			"id": "a28268c6-fd76-bf6f-e8dd-3dfdc040e948",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8002/policies",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"tests": "pm.test(\"Result is correct\", function () {\n    var jsonData = pm.response.json();\n    pm.expect(jsonData[\"Result\"]).to.eql(\"Policy created successfully\");\n});\n\npm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1516712833552,
+			"name": "localhost:8002/policies",
+			"description": "",
+			"collectionId": "bd2054ee-e479-8c68-f2dc-dbffae826968",
+			"responses": [],
+			"rawModeData": "{\n\t\"ID\": \"user-resource\",\n\t\"Subjects\": [\"user\"],\n\t\"Actions\": [\"GET\"],\n\t\"Resources\": [\"resource\"],\n\t\"Effect\": \"allow\"\n}"
+		},
+		{
+			"id": "e85c509f-8161-0265-b73f-caaffc93e209",
+			"headers": "Content-Type: application/json\n",
+			"headerData": [
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"description": "",
+					"enabled": true
+				}
+			],
+			"url": "localhost:8002/access",
+			"queryParams": [],
+			"preRequestScript": null,
+			"pathVariables": {},
+			"pathVariableData": [],
+			"method": "POST",
+			"data": [],
+			"dataMode": "raw",
+			"tests": "pm.test(\"Correct Result message\", function () {\n    var jsonData = pm.response.json();\n    pm.expect(jsonData[\"Result\"]).to.eql(true);\n});\n\npm.test(\"Status code is 200\", function () {\n    pm.response.to.have.status(200);\n});",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1516712832434,
+			"name": "localhost:8002/access",
+			"description": "",
+			"collectionId": "bd2054ee-e479-8c68-f2dc-dbffae826968",
+			"responses": [],
+			"rawModeData": "{\n\t\"Subject\": \"user\",\n\t\"Action\": \"GET\",\n\t\"Resource\": \"resource\"\n}"
+		}
+	]
+}

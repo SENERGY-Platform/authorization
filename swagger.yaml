@@ -1,0 +1,109 @@
+swagger: "2.0"
+info:
+  description: "This service manages permission policies that decide which subjects (role or user) are authorized to perform an action (http method) on a ressource (API). Before a request is send to the upstream url by the API gateway, this service will be requested to check the required authorization of the requesting party."
+  version: "1.0.0"
+  title: "Ladon"
+host: "api.sepl.infai.org"
+basePath: "/ladon"
+schemes:
+- "https"
+paths:
+  /policies:
+    get:
+      parameters: 
+        - name: subject
+          in: query
+          description: subject e.g. role 'user'
+          required: false
+          type: string
+      tags:
+      - "Policies"
+      summary: "Get all policies"
+      description: "Get all static and dynamically generated swagger specifications from the repositories and services"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "Returns list of policies"
+          schema: 
+            items: 
+              $ref: "#/definitions/Policy" 
+            type: "array"
+    post:
+      tags:
+        - "Policy"
+      summary: "Create new policy"
+      description: ""
+      produces:
+        - "application/json"        
+      responses:
+        200:
+          description: "Returns message"
+          schema: 
+            $ref: "#/definitions/Message" 
+  /policies/{policy_id}:
+    parameters: 
+      - name: policy_id
+        in: path
+        description: Identifies a policy
+        required: true
+        type: string
+    delete:
+      tags:
+        - "Policy"
+      summary: "Create new policy"
+      description: ""
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Returns message"
+          schema: 
+            $ref: "#/definitions/Message"
+  /access:
+    post:
+      tags:
+        - "Authorization Check"
+      summary: ""
+      description: ""
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Returns message"
+          schema: 
+            $ref: "#/definitions/Message" 
+definitions: 
+  Policy: 
+    type: object
+    properties:
+      Subjects:
+        type: array
+        items: 
+          type: string
+        description: List of subjects
+      Actions:
+        type: array
+        items: 
+          type: string
+        description: List of actions
+      Resources:
+        type: array
+        items: 
+          type: string
+        description: List of resources
+      Effect:
+        type: string
+        description: decides if the policy should allow or disallow
+      ID:
+        type: string
+        description: policy id 
+  Message:
+    type: object
+    properties:
+      Result:
+        type: string
+        description: Indicates if request was successful or not 
+      Error:
+        type: string
+        description: Detailed error message

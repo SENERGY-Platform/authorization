@@ -1,0 +1,27 @@
+version: '2.1'
+services:
+    ladon:
+        container_name: ladon
+        image: ladon
+        environment:
+            - POSTGRES_DB=ladon
+            - POSTGRES_USER=
+            - POSTGRES_PASSWORD=
+            - POSTGRES_HOST=ladon-db
+        ports:
+            - 8002:8080
+        depends_on:
+            ladon-db:
+                condition: service_healthy
+    ladon-db:
+        container_name: ladon-db
+        image: postgres:latest
+        environment:
+            - POSTGRES_DB=ladon
+            - POSTGRES_USER=
+            - POSTGRES_PASSWORD=
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "postgres"]
+            interval: 10s
+            timeout: 30s
+            retries: 5
