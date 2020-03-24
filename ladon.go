@@ -57,11 +57,11 @@ func policies(w http.ResponseWriter, r * http.Request, manager * ladon.Manager) 
 				err.Error(),
 			}
 			json_message,_ := json.Marshal(message)
-			fmt.Fprintf(w, string(json_message))	
+			fmt.Fprintf(w, string(json_message))
 			return
 		}
 		defer r.Body.Close()
-		
+
 		if err := ( * manager).Create(pol);err != nil {
 			message = ResponseMessage {
 				"policy not created successfully",
@@ -83,7 +83,7 @@ func policies(w http.ResponseWriter, r * http.Request, manager * ladon.Manager) 
 				Subject: subject[0],
 			}
 
-			// filter for policies that matches the request 
+			// filter for policies that matches the request
 			if policies, err := ( * manager).FindRequestCandidates(request);err != nil {
 				var message ResponseMessage
 				message = ResponseMessage {
@@ -110,10 +110,21 @@ func policies(w http.ResponseWriter, r * http.Request, manager * ladon.Manager) 
 				fmt.Fprintf(w, string(json_message))
 			}
 		}
-		
+
 	} else if r.Method == "DELETE" {
 		id := r.URL.Query()["id"]
 		if len(id) != 0 {
+			if id[0] == "admin-all" {
+				var message ResponseMessage
+				message = ResponseMessage {
+					"Did not delete policy",
+					"Will not delete policy admin-all: protected policy",
+				}
+				json_message,_ := json.Marshal(message)
+				w.WriteHeader(401)
+				fmt.Fprintf(w, string(json_message))
+				return
+			}
 			log.Printf("Delete policy with id")
 			if err := (*manager).Delete(id[0]); err != nil {
 				var message ResponseMessage
@@ -139,11 +150,11 @@ func policies(w http.ResponseWriter, r * http.Request, manager * ladon.Manager) 
 				"",
 			}
 			json_message,_ := json.Marshal(message)
-			fmt.Fprintf(w, string(json_message))	
-			return  
+			fmt.Fprintf(w, string(json_message))
+			return
 		}
 	}
-	// go <-> js pytoh scope re assign in if blog -> declare outside ist gleich, aber bei go wird duchr := und = assignt wodrch nicht mehr sichtbar 
+	// go <-> js pytoh scope re assign in if blog -> declare outside ist gleich, aber bei go wird duchr := und = assignt wodrch nicht mehr sichtbar
 }
 
 func access(w http.ResponseWriter, r * http.Request, warden ladon.Warden, manager * ladon.Manager) {
@@ -188,7 +199,7 @@ func main() {
 		fmt.Println("error")
 		log.Fatalf("Could not connect to database: %s", err)
 	}
-		
+
 	warden := & ladon.Ladon {
 		Manager: manager.NewSQLManager(db, nil),
 	}
@@ -225,7 +236,7 @@ func main() {
 	if err_start_server != nil {
 		log.Fatal("ListenAndServe: ", err_start_server)
 	}
-	
+
 }
 
 
