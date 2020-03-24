@@ -17,22 +17,21 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-	"log"
 	"encoding/json"
-	"github.com/ory/ladon"
-	"os"
+	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/ory/ladon"
+	"log"
+	"net/http"
+	"os"
 )
-
 
 import _ "github.com/lib/pq"
 import manager "github.com/ory/ladon/manager/sql"
 
 type ResponseMessage struct {
 	Result string "json:result"
-	Error string "json:error"
+	Error  string "json:error"
 }
 
 type PolicyMessage struct {
@@ -40,41 +39,41 @@ type PolicyMessage struct {
 }
 
 type KongMessage struct {
-	Result bool "json:result"
-	Error string "json:error"
+	Result bool   "json:result"
+	Error  string "json:error"
 }
 
-func policies(w http.ResponseWriter, r * http.Request, manager * ladon.Manager) {
+func policies(w http.ResponseWriter, r *http.Request, manager *ladon.Manager) {
 	if r.Method == "POST" {
 		decoder := json.NewDecoder(r.Body)
 		pol := new(ladon.DefaultPolicy)
-		err := decoder.Decode( & pol)
+		err := decoder.Decode(&pol)
 		w.Header().Set("Content-Type", "application/json")
 		var message ResponseMessage
 		if err != nil {
-			message = ResponseMessage {
+			message = ResponseMessage{
 				"parsing was not successfully",
 				err.Error(),
 			}
-			json_message,_ := json.Marshal(message)
+			json_message, _ := json.Marshal(message)
 			fmt.Fprintf(w, string(json_message))
 			return
 		}
 		defer r.Body.Close()
 
-		if err := ( * manager).Create(pol);err != nil {
-			message = ResponseMessage {
+		if err := (*manager).Create(pol); err != nil {
+			message = ResponseMessage{
 				"policy not created successfully",
 				err.Error(),
 			}
 
 		} else {
-			message = ResponseMessage {
+			message = ResponseMessage{
 				"policy created successfully",
 				"",
 			}
 		}
-		json_message,_ := json.Marshal(message)
+		json_message, _ := json.Marshal(message)
 		fmt.Fprintf(w, string(json_message))
 	} else if r.Method == "GET" {
 		subject := r.URL.Query()["subject"]
@@ -84,29 +83,29 @@ func policies(w http.ResponseWriter, r * http.Request, manager * ladon.Manager) 
 			}
 
 			// filter for policies that matches the request
-			if policies, err := ( * manager).FindRequestCandidates(request);err != nil {
+			if policies, err := (*manager).FindRequestCandidates(request); err != nil {
 				var message ResponseMessage
-				message = ResponseMessage {
+				message = ResponseMessage{
 					"error at finding policies to the subject",
 					err.Error(),
 				}
-				json_message,_ := json.Marshal(message)
+				json_message, _ := json.Marshal(message)
 				fmt.Fprintf(w, string(json_message))
 			} else {
-				json_message,_ := json.Marshal(policies)
+				json_message, _ := json.Marshal(policies)
 				fmt.Fprintf(w, string(json_message))
 			}
 		} else {
 			if policies, err := (*manager).GetAll(1000, 0); err != nil {
 				var message ResponseMessage
-				message = ResponseMessage {
+				message = ResponseMessage{
 					"error at getting all policies",
 					err.Error(),
 				}
-				json_message,_ := json.Marshal(message)
+				json_message, _ := json.Marshal(message)
 				fmt.Fprintf(w, string(json_message))
 			} else {
-				json_message,_ := json.Marshal(policies)
+				json_message, _ := json.Marshal(policies)
 				fmt.Fprintf(w, string(json_message))
 			}
 		}
@@ -116,11 +115,11 @@ func policies(w http.ResponseWriter, r * http.Request, manager * ladon.Manager) 
 		if len(id) != 0 {
 			if id[0] == "admin-all" {
 				var message ResponseMessage
-				message = ResponseMessage {
+				message = ResponseMessage{
 					"Did not delete policy",
 					"Will not delete policy admin-all: protected policy",
 				}
-				json_message,_ := json.Marshal(message)
+				json_message, _ := json.Marshal(message)
 				w.WriteHeader(401)
 				fmt.Fprintf(w, string(json_message))
 				return
@@ -128,28 +127,28 @@ func policies(w http.ResponseWriter, r * http.Request, manager * ladon.Manager) 
 			log.Printf("Delete policy with id")
 			if err := (*manager).Delete(id[0]); err != nil {
 				var message ResponseMessage
-				message = ResponseMessage {
+				message = ResponseMessage{
 					"error at deleting policy",
 					err.Error(),
 				}
-				json_message,_ := json.Marshal(message)
+				json_message, _ := json.Marshal(message)
 				fmt.Fprintf(w, string(json_message))
 			} else {
 				var message ResponseMessage
-				message = ResponseMessage {
+				message = ResponseMessage{
 					"successfully deleted policy",
 					"",
 				}
-				json_message,_ := json.Marshal(message)
+				json_message, _ := json.Marshal(message)
 				fmt.Fprintf(w, string(json_message))
 			}
 		} else {
 			var message ResponseMessage
-			message = ResponseMessage {
+			message = ResponseMessage{
 				"expected policy id",
 				"",
 			}
-			json_message,_ := json.Marshal(message)
+			json_message, _ := json.Marshal(message)
 			fmt.Fprintf(w, string(json_message))
 			return
 		}
@@ -157,10 +156,10 @@ func policies(w http.ResponseWriter, r * http.Request, manager * ladon.Manager) 
 	// go <-> js pytoh scope re assign in if blog -> declare outside ist gleich, aber bei go wird duchr := und = assignt wodrch nicht mehr sichtbar
 }
 
-func access(w http.ResponseWriter, r * http.Request, warden ladon.Warden, manager * ladon.Manager) {
+func access(w http.ResponseWriter, r *http.Request, warden ladon.Warden, manager *ladon.Manager) {
 	decoder := json.NewDecoder(r.Body)
 	request := new(ladon.Request)
-	err := decoder.Decode( & request)
+	err := decoder.Decode(&request)
 	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
@@ -169,65 +168,64 @@ func access(w http.ResponseWriter, r * http.Request, warden ladon.Warden, manage
 	}
 	defer r.Body.Close()
 
-	request_formatted,_ := json.Marshal(request)
+	request_formatted, _ := json.Marshal(request)
 	fmt.Println("Check request: " + string(request_formatted))
 
 	var message KongMessage
-	if err := warden.IsAllowed(request);err != nil {
-		message = KongMessage {
+	if err := warden.IsAllowed(request); err != nil {
+		message = KongMessage{
 			false,
 			err.Error(),
 		}
 	} else {
-		message = KongMessage {
+		message = KongMessage{
 			true,
 			"",
 		}
 	}
 
-	json_message,_ := json.Marshal(message)
+	json_message, _ := json.Marshal(message)
 	fmt.Println("Result of access request: " + string(json_message))
 	fmt.Fprintf(w, string(json_message))
 }
 
-
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", os.Getenv("POSTGRES_HOST"), 5432, os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DB"))
 
-	db,err := sqlx.Open("postgres", psqlInfo)
+	db, err := sqlx.Open("postgres", psqlInfo)
 	if err != nil {
 		fmt.Println("error")
 		log.Fatalf("Could not connect to database: %s", err)
 	}
 
-	warden := & ladon.Ladon {
+	warden := &ladon.Ladon{
 		Manager: manager.NewSQLManager(db, nil),
 	}
 
 	s := manager.NewSQLManager(db, nil)
-	if _,err := s.CreateSchemas("", "");err != nil {
+	if _, err := s.CreateSchemas("", ""); err != nil {
 		log.Fatalf("Could not create postgres schema: %v", err)
 	}
 
-	var pol = & ladon.DefaultPolicy {
-			ID: "admin-all",
-			Description: "init policy for role admin",
-			Subjects: [] string {"admin"},
-			Resources: [] string {"<.*>"},
-			Actions: [] string {"POST","GET","DELETE","PATCH", "PUT"},
-			Effect: ladon.AllowAccess,
+	var pol = &ladon.DefaultPolicy{
+		ID:          "admin-all",
+		Description: "init policy for role admin",
+		Subjects:    []string{"admin"},
+		Resources:   []string{"<.*>"},
+		Actions:     []string{"POST", "GET", "DELETE", "PATCH", "PUT"},
+		Effect:      ladon.AllowAccess,
 	}
 	err_create_admin_policy := warden.Manager.Create(pol)
 	if err_create_admin_policy != nil {
 		log.Fatal("Created inital policy: ", err_create_admin_policy)
 	}
 
-	http.HandleFunc("/policies", func(w http.ResponseWriter, r * http.Request) {
-		policies(w, r, & warden.Manager)
+	http.HandleFunc("/policies", func(w http.ResponseWriter, r *http.Request) {
+		policies(w, r, &warden.Manager)
 	})
 
-	http.HandleFunc("/access", func(w http.ResponseWriter, r * http.Request) {
-		access(w, r, warden, & warden.Manager)
+	http.HandleFunc("/access", func(w http.ResponseWriter, r *http.Request) {
+		access(w, r, warden, &warden.Manager)
 	})
 
 	//logger := NewLogger(http.DefaultServeMux, "DEBUG")
@@ -238,9 +236,3 @@ func main() {
 	}
 
 }
-
-
-
-
-
-
