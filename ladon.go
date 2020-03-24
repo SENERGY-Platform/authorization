@@ -56,6 +56,7 @@ func policies(w http.ResponseWriter, r *http.Request, manager *ladon.Manager) {
 				err.Error(),
 			}
 			json_message, _ := json.Marshal(message)
+			w.WriteHeader(400)
 			fmt.Fprintf(w, string(json_message))
 			return
 		}
@@ -66,6 +67,7 @@ func policies(w http.ResponseWriter, r *http.Request, manager *ladon.Manager) {
 				"policy not created successfully",
 				err.Error(),
 			}
+			w.WriteHeader(500)
 
 		} else {
 			message = ResponseMessage{
@@ -90,6 +92,7 @@ func policies(w http.ResponseWriter, r *http.Request, manager *ladon.Manager) {
 					err.Error(),
 				}
 				json_message, _ := json.Marshal(message)
+				w.WriteHeader(500)
 				fmt.Fprintf(w, string(json_message))
 			} else {
 				json_message, _ := json.Marshal(policies)
@@ -103,6 +106,7 @@ func policies(w http.ResponseWriter, r *http.Request, manager *ladon.Manager) {
 					err.Error(),
 				}
 				json_message, _ := json.Marshal(message)
+				w.WriteHeader(500)
 				fmt.Fprintf(w, string(json_message))
 			} else {
 				json_message, _ := json.Marshal(policies)
@@ -132,6 +136,7 @@ func policies(w http.ResponseWriter, r *http.Request, manager *ladon.Manager) {
 					err.Error(),
 				}
 				json_message, _ := json.Marshal(message)
+				w.WriteHeader(500)
 				fmt.Fprintf(w, string(json_message))
 			} else {
 				var message ResponseMessage
@@ -149,6 +154,7 @@ func policies(w http.ResponseWriter, r *http.Request, manager *ladon.Manager) {
 				"",
 			}
 			json_message, _ := json.Marshal(message)
+			w.WriteHeader(400)
 			fmt.Fprintf(w, string(json_message))
 			return
 		}
@@ -163,6 +169,7 @@ func access(w http.ResponseWriter, r *http.Request, warden ladon.Warden, manager
 	w.Header().Set("Content-Type", "application/json")
 
 	if err != nil {
+		w.WriteHeader(400)
 		fmt.Fprintf(w, "Error at parsing JSON")
 		return
 	}
@@ -177,6 +184,7 @@ func access(w http.ResponseWriter, r *http.Request, warden ladon.Warden, manager
 			false,
 			err.Error(),
 		}
+		w.WriteHeader(500)
 	} else {
 		message = KongMessage{
 			true,
