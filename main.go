@@ -17,17 +17,21 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
-	"github.com/jmoiron/sqlx"
+	"github.com/SENERGY-Platform/authorization/pkg"
+	"github.com/SENERGY-Platform/authorization/pkg/configuration"
 	"github.com/ory/ladon"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 import _ "github.com/lib/pq"
-import manager "github.com/ory/ladon/manager/sql"
 
 type ResponseMessage struct {
 	Result string "json:result"
@@ -198,35 +202,32 @@ func access(w http.ResponseWriter, r *http.Request, warden ladon.Warden, manager
 }
 
 func main() {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", os.Getenv("POSTGRES_HOST"), 5432, os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DB"))
 
-	db, err := sqlx.Open("postgres", psqlInfo)
+	configLocation := flag.String("config", "config.json", "configuration file")
+	flag.Parse()
+
+	config, err := configuration.Load(*configLocation)
 	if err != nil {
-		fmt.Println("error")
-		log.Fatalf("Could not connect to database: %s", err)
+		log.Fatal(err)
 	}
 
-	warden := &ladon.Ladon{
-		Manager: manager.NewSQLManager(db, nil),
+	ctx, cancel := context.WithCancel(context.Background())
+
+	wg, err := pkg.Start(ctx, config)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	s := manager.NewSQLManager(db, nil)
-	if _, err := s.CreateSchemas("", ""); err != nil {
-		log.Fatalf("Could not create postgres schema: %v", err)
-	}
+	go func() {
+		shutdown := make(chan os.Signal, 1)
+		signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+		sig := <-shutdown
+		log.Println("received shutdown signal", sig)
+		cancel()
+	}()
 
-	var pol = &ladon.DefaultPolicy{
-		ID:          "admin-all",
-		Description: "init policy for role admin",
-		Subjects:    []string{"admin"},
-		Resources:   []string{"<.*>"},
-		Actions:     []string{"POST", "GET", "DELETE", "PATCH", "PUT"},
-		Effect:      ladon.AllowAccess,
-	}
-	err_create_admin_policy := warden.Manager.Create(pol)
-	if err_create_admin_policy != nil {
-		log.Fatal("Created inital policy: ", err_create_admin_policy)
-	}
+	wg.Wait()
+	// TODO TRASH BELOW
 
 	http.HandleFunc("/policies", func(w http.ResponseWriter, r *http.Request) {
 		policies(w, r, &warden.Manager)

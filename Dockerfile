@@ -1,19 +1,20 @@
-FROM golang:1.11
+FROM golang:1.14 AS builder
 
-WORKDIR /app
+COPY . /go/src/app
+WORKDIR /go/src/app
 
-COPY ladon.go .
+ENV GO111MODULE=on
 
-ENV GOPATH ""
-ENV GO111MODULE on
-RUN go mod init ladon
-RUN go get github.com/ory/ladon@v0.8.10
-RUN go get github.com/lib/pq
-RUN go get github.com/jmoiron/sqlx
-RUN go get github.com/rubenv/sql-migrate
-RUN go get github.com/ory/pagination
+RUN CGO_ENABLED=0 GOOS=linux go build -o app
 
-RUN go build
+RUN git log -1 --oneline > version.txt
+
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=builder /go/src/app/app .
+COPY --from=builder /go/src/app/config.json .
+COPY --from=builder /go/src/app/version.txt .
 
 EXPOSE 8080
-ENTRYPOINT ["/app/ladon"]
+
+ENTRYPOINT ["./app"]
