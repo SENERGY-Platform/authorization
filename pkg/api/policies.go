@@ -67,7 +67,7 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 	})
 
 	router.DELETE("/policies", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		idQuery := request.URL.Query()["id"]
+		idQuery := request.URL.Query()["ids"]
 		if len(idQuery) == 0 {
 			http.Error(writer, "expected policy id", http.StatusBadRequest)
 			return
@@ -98,47 +98,49 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 	})
 
 	router.PUT("/policies", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		decoder := json.NewDecoder(request.Body)
-		pol := new(ladon.DefaultPolicy)
-		err := decoder.Decode(&pol)
+		var policies []ladon.DefaultPolicy
+		err := json.NewDecoder(request.Body).Decode(&policies)
 		if err != nil {
-			http.Error(writer, "Could not parse policy", http.StatusBadRequest)
+			http.Error(writer, "Could not parse policies", http.StatusBadRequest)
 			return
 		}
-
-		_, err = persistence.Ladon.Manager.Get(pol.ID)
-		if err != nil {
-			err = persistence.Ladon.Manager.Create(pol)
-		} else {
-			err = persistence.Ladon.Manager.Update(pol)
-		}
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
+		for _, pol := range policies {
+			_, err = persistence.Ladon.Manager.Get(pol.ID)
+			if err != nil {
+				err = persistence.Ladon.Manager.Create(&pol)
+			} else {
+				err = persistence.Ladon.Manager.Update(&pol)
+			}
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		writer.WriteHeader(204)
 	})
 
 	router.POST("/policies", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		decoder := json.NewDecoder(request.Body)
-		pol := new(ladon.DefaultPolicy)
-		err := decoder.Decode(&pol)
+		var policies []ladon.DefaultPolicy
+		err := json.NewDecoder(request.Body).Decode(&policies)
 		if err != nil {
-			http.Error(writer, "Could not parse policy", http.StatusBadRequest)
+			http.Error(writer, "Could not parse policies", http.StatusBadRequest)
 			return
 		}
 
-		_, err = persistence.Ladon.Manager.Get(pol.ID)
-		if err != nil {
-			err = persistence.Ladon.Manager.Create(pol)
-		} else {
-			http.Error(writer, "Policy with id "+pol.ID+" already exists", http.StatusBadRequest)
-			return
+		for _, pol := range policies {
+			_, err = persistence.Ladon.Manager.Get(pol.GetID())
+			if err == nil {
+				http.Error(writer, "Policy with id "+pol.GetID()+" already exists", http.StatusBadRequest)
+				return
+			}
 		}
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
+		for _, pol := range policies {
+			err = persistence.Ladon.Manager.Create(&pol)
+			if err != nil {
+				http.Error(writer, err.Error(), http.StatusInternalServerError)
+				return
+			}
 		}
 
 		writer.WriteHeader(204)
