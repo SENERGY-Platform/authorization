@@ -18,6 +18,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
 	"github.com/SENERGY-Platform/authorization/pkg/persistence/sql"
@@ -32,28 +33,33 @@ func init() {
 }
 
 type checkResponse struct {
-	UserId string   `json:"userId"`
+	UserId string   `json:"userID"`
 	Roles  []string `json:"roles"`
 }
 
 type checkRequest struct {
-	TargetMethod string `json:"target_method"`
-	TargetUri    string `json:"target_uri"`
+	Headers headers `json:"headers"`
+}
+
+type headers struct {
+	TargetMethod  string `json:"target_method"`
+	TargetUri     string `json:"target_uri"`
+	Authorization string `json:"authorization"`
 }
 
 func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt util.Jwt, persistence *sql.Persistence) {
 	router.POST("/check", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		username, user, roles, err := jwt.ParseRequest(request)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusUnauthorized)
-			return
-		}
-
-		decoder := json.NewDecoder(request.Body)
-		checkR := new(checkRequest)
-		err = decoder.Decode(&checkR)
+		var checkR checkRequest
+		err := json.NewDecoder(request.Body).Decode(&checkR)
 		if err != nil {
 			http.Error(writer, "Could not parse request", http.StatusBadRequest)
+			fmt.Println(err.Error(), http.StatusBadRequest)
+			return
+		}
+		username, user, roles, err := jwt.ParseHeader(checkR.Headers.Authorization)
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			fmt.Println(err.Error(), http.StatusUnauthorized)
 			return
 		}
 
@@ -62,8 +68,8 @@ func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt 
 			Roles:  roles,
 		}
 		r := ladon.Request{
-			Resource: "endpoints" + strings.ReplaceAll(checkR.TargetUri, "/", ":"),
-			Action:   checkR.TargetMethod,
+			Resource: "endpoints" + strings.ReplaceAll(checkR.Headers.TargetUri, "/", ":"),
+			Action:   checkR.Headers.TargetMethod,
 		}
 
 		if r.Action == http.MethodOptions {
@@ -85,7 +91,8 @@ func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt 
 			}
 		}
 
-		writer.WriteHeader(403)
+		fmt.Println(http.StatusForbidden)
+		writer.WriteHeader(http.StatusForbidden)
 	})
 
 }

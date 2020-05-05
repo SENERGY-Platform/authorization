@@ -90,9 +90,25 @@ func (this Jwt) ParseRequest(request *http.Request) (username string, user strin
 	if auth == "" {
 		err = errors.New("missing Authorization header")
 	}
-	authParts := strings.Split(auth, " ")
-	if len(authParts) != 2 {
-		return username, user, roles, errors.New("expect auth string format like '<type> <token>'")
+	return this.ParseHeader(auth)
+}
+
+func (this Jwt) ParseToken(token string) (username string, user string, roles []string, err error) {
+	return this.Parse(token)
+}
+
+func (this Jwt) ParseHeader(header string) (username string, user string, roles []string, err error) {
+	token, err := removeType(header)
+	if err != nil {
+		return username, user, roles, err
 	}
-	return this.Parse(strings.Join(authParts[1:], " "))
+	return this.Parse(token)
+}
+
+func removeType(header string) (jwt string, err error) {
+	authParts := strings.Split(header, " ")
+	if len(authParts) != 2 {
+		return "", errors.New("expect auth string format like '<type> <token>', but got " + header)
+	}
+	return strings.Join(authParts[1:], " "), err
 }
