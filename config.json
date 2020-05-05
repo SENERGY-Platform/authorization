@@ -1,7 +1,7 @@
 {
   "api_port": "8080",
   "jwt_signing_method": "rsa",
-  "jwt_signing_key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApcHrBUUktZXs47aThvfw2Xqtw19VNknK1E4VmHzrjDNTdSxVyk9br2+hISyiVeY14gAEKjTxYHQAbXJV6PlQhuBO5YWLCveNSGJ+LwqjV6kf45w7Yz8YZo+fs7h+KLdVLyLAblE3yywXbHNhT78li9Lr4oRyPTD7WaszeURnMimOKcLaBOtfYY+DmpqxBvey0XeUpILjRT2fcNmJy3fF3MXj6MePR2lVk3H3e4qtdyivCYHnuUYFsRqc3c/0aIs4joKc6NPH6DQgGXO7mzlptL1/E9W4nr1uQmZ6bdTezpv3zsl4fJ+4hpVN18y+AUhAeSDGSTB/Z8IbI21b6Db+7QIDAQAB",
+  "jwt_signing_key": "",
   "sql_connection_string": "user:password@/dbname?charset=utf8&parseTime=True&loc=Local",
   "postgres_host": "",
   "postgres_user": "",
