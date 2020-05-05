@@ -120,4 +120,28 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 		writer.WriteHeader(204)
 	})
 
+	router.POST("/policies", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		decoder := json.NewDecoder(request.Body)
+		pol := new(ladon.DefaultPolicy)
+		err := decoder.Decode(&pol)
+		if err != nil {
+			http.Error(writer, "Could not parse policy", http.StatusBadRequest)
+			return
+		}
+
+		_, err = persistence.Ladon.Manager.Get(pol.ID)
+		if err != nil {
+			err = persistence.Ladon.Manager.Create(pol)
+		} else {
+			http.Error(writer, "Policy with id "+pol.ID+" already exists", http.StatusBadRequest)
+			return
+		}
+		if err != nil {
+			http.Error(writer, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		writer.WriteHeader(204)
+	})
+
 }
