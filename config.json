@@ -2,7 +2,6 @@
   "api_port": "8080",
   "jwt_signing_method": "rsa",
   "jwt_signing_key": "",
-  "sql_connection_string": "user:password@/dbname?charset=utf8&parseTime=True&loc=Local",
   "postgres_host": "",
   "postgres_user": "",
   "postgres_password": "",
