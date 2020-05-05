@@ -2,52 +2,49 @@
 - Go Web Server, to create access policies and ask for permissions of a subject 
 
 ## Endpoints
-- /policies -  manage access policies
+- /policies -  create access policies
 ```shell
 curl -i -X POST --url http://localhost:8080/policies
-[
-    {
-        	"Subject": "admin",
-        	"Action": "POST",
-        	"Resource": "/iot-repository",
-        	"ID": "admin",
-        	"Effect": "allow"
-    }
-]
+{
+	"Subject": "admin",
+	"Action": "POST",
+	"Resource": "/iot-repository",
+	"ID": "admin",
+	"Effect": "allow"
+}
 ```
 ```shell
-curl -i -X PUT --url http://localhost:8080/policies
-[
-    {
-        	"Subject": "admin",
-        	"Action": "has_access_permission",
-        	"Resource": "deviceid"
-        	"ID": "admin",
-        	"Context": {
-        		"type": "device",
-        		"owner": "user"
-        	}
-        	"Effect": "allow"
-    }
-]
+curl -i -X POST --url http://localhost:8080/policies
+{
+	"Subject": "admin",
+	"Action": "has_access_permission",
+	"Resource": "deviceid"
+	"ID": "admin",
+	"Context": {
+		"type": "device",
+		"owner": "user"
+	}
+	"Effect": "allow"
+}
 ```
 ```shell
 curl -i -X GET --url http://localhost:8080/policies?subject=admin
 ```
-```shell
-curl -i -X DELETE --url http://localhost:8080/policies?ids=id1,id2
-```
 
-- /check - ask for permission (used with kong middleman plugin)
+
+- /access - ask for permission
 ```shell
 curl -i -X POST --url http://localhost:8080/access
 {
-    "headers": {
-        "target_method": "GET",
-        "target_uri": "/process/schedulerlump",
-        "authorization": "Bearer <token>"
-    }
+	"Subject": "admin",
+	"Action": "POST",
+	"Resource": "/iot-repository"
 }
+```
+
+- /share - ask for shared not owned resources, e.g. for what devices does the subject admin got permissions to use
+```shell
+curl -i -X GET --url http://localhost:8080/share?userid=admin&type=devices
 ```
 
 # Requiremnets
@@ -87,6 +84,8 @@ entweder im iot-repo nachfragen und ladon
 # Naming Convention
 - Best practices: https://ory.gitbooks.io/hydra/content/access-control.html#best-practices
 
+# Consistency Problem 
+
 # Build 
 with Docker
 ```shell
@@ -98,3 +97,11 @@ with docker-compose (with database and port 8080)
 ```shell
 docker-compose up 
 ```
+
+# Tests
+- run ladon-test.go for unit tests
+- run for api tests
+
+# TODO
+- extra endpoint um share policy zu erstellen, um resource "device:" oder "devicetype:" am server nicht am client zu setzen
+
