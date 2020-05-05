@@ -35,24 +35,30 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 		log.Fatalf("Could not connect to database: %s", err)
 	}
 
-	ladon := &ladon.Ladon{
+	warden := &ladon.Ladon{
 		Manager: manager.NewSQLManager(db, nil),
 	}
 
-	s := manager.NewSQLManager(db, nil)
-	if _, err := s.CreateSchemas("", ""); err != nil {
-		log.Fatalf("Could not create postgres schema: %v", err)
+	if config.Debug {
+		warden.AuditLogger = &ladon.AuditLoggerInfo{}
 	}
+
+	s := manager.NewSQLManager(db, nil)
+	_, err = s.CreateSchemas("", "")
 	if err != nil {
+		log.Fatalf("Could not create postgres schema: %v", err)
 		return result, err
 	}
 	wg.Add(1)
 	go func() {
 		<-ctx.Done()
-		db.Close()
+		err = db.Close()
+		if err != nil {
+			log.Fatalf("Could not close DB connection: %v", err)
+		}
 		wg.Done()
 	}()
-	result = &Persistence{db: db, Ladon: ladon}
+	result = &Persistence{db: db, Ladon: warden}
 	err = result.migration()
 	return result, err
 }
