@@ -76,7 +76,22 @@ func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt 
 			// OPTIONS is allowed for authenticated users
 			writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 			err = json.NewEncoder(writer).Encode(response)
+			if config.Debug {
+				fmt.Println("allowed debug")
+			}
 			return
+		}
+
+		for _, role := range roles {
+			if role == "admin" {
+				// admin is allowed everything
+				writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+				err = json.NewEncoder(writer).Encode(response)
+				if config.Debug {
+					fmt.Println("allowed admin")
+				}
+				return
+			}
 		}
 
 		subjects := append(roles, username)
