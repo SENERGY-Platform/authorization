@@ -32,6 +32,9 @@ func init() {
 	endpoints = append(endpoints, CheckEndpoints)
 }
 
+type errorResponse struct {
+	Message string `json:"message"`
+}
 type checkResponse struct {
 	UserId string   `json:"userID"`
 	Roles  []string `json:"roles"`
@@ -49,16 +52,19 @@ type headers struct {
 
 func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt util.Jwt, persistence *sql.Persistence) {
 	router.POST("/check", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		var checkR checkRequest
 		err := json.NewDecoder(request.Body).Decode(&checkR)
 		if err != nil {
-			http.Error(writer, "Could not parse request", http.StatusBadRequest)
+			writer.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(writer).Encode(&errorResponse{Message: "Could not parse request"})
 			fmt.Println(err.Error(), http.StatusBadRequest)
 			return
 		}
 		username, user, roles, err := jwt.ParseHeader(checkR.Headers.Authorization)
 		if err != nil {
-			http.Error(writer, err.Error(), http.StatusUnauthorized)
+			writer.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(writer).Encode(&errorResponse{Message: err.Error()})
 			fmt.Println(err.Error(), http.StatusUnauthorized)
 			return
 		}
@@ -74,7 +80,6 @@ func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt 
 
 		if r.Action == http.MethodOptions {
 			// OPTIONS is allowed for authenticated users
-			writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 			err = json.NewEncoder(writer).Encode(response)
 			if config.Debug {
 				fmt.Println("allowed debug")
@@ -85,7 +90,6 @@ func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt 
 		for _, role := range roles {
 			if role == "admin" {
 				// admin is allowed everything
-				writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 				err = json.NewEncoder(writer).Encode(response)
 				if config.Debug {
 					fmt.Println("allowed admin")
@@ -100,7 +104,6 @@ func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt 
 			r.Subject = subject
 			err := persistence.Ladon.IsAllowed(&r)
 			if err == nil {
-				writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 				err = json.NewEncoder(writer).Encode(response)
 				return
 			}
@@ -108,6 +111,7 @@ func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt 
 
 		fmt.Println(http.StatusForbidden)
 		writer.WriteHeader(http.StatusForbidden)
+		err = json.NewEncoder(writer).Encode(&errorResponse{Message: "Forbidden"})
 	})
 
 }
