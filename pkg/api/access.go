@@ -55,14 +55,11 @@ func AccessEndpoint(router *httprouter.Router, config configuration.Config, jwt 
 				false,
 				err.Error(),
 			}
-			writer.WriteHeader(http.StatusInternalServerError)
-			fmt.Println(err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		message = KongMessage{
-			true,
-			"",
+		} else {
+			message = KongMessage{
+				true,
+				"",
+			}
 		}
 
 		err = json.NewEncoder(writer).Encode(message)
