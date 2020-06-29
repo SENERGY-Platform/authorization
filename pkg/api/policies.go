@@ -29,13 +29,15 @@ import (
 	"strings"
 )
 
+const resourceLocation = "/policies"
+
 func init() {
 	endpoints = append(endpoints, PoliciesEndpoints)
 }
 
 func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, jwt util.Jwt, persistence *sql.Persistence) {
 
-	router.GET("/policies", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.GET(resourceLocation, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		subject := request.URL.Query()["subject"]
 		var policies ladon.Policies
 		var err error
@@ -66,7 +68,7 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 		}
 	})
 
-	router.DELETE("/policies", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.DELETE(resourceLocation, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		idQuery := request.URL.Query()["ids"]
 		if len(idQuery) == 0 {
 			http.Error(writer, "expected policy id", http.StatusBadRequest)
@@ -97,7 +99,7 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 		writer.WriteHeader(204)
 	})
 
-	router.PUT("/policies", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.PUT(resourceLocation, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		var policies []ladon.DefaultPolicy
 		err := json.NewDecoder(request.Body).Decode(&policies)
 		if err != nil {
@@ -120,7 +122,7 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 		writer.WriteHeader(204)
 	})
 
-	router.POST("/policies", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.POST(resourceLocation, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		var policies []ladon.DefaultPolicy
 		err := json.NewDecoder(request.Body).Decode(&policies)
 		if err != nil {
