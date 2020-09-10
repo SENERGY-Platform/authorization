@@ -6,28 +6,28 @@ info:
 host: "api.sepl.infai.org"
 basePath: "/ladon"
 schemes:
-- "https"
+  - "https"
 paths:
   /policies:
     get:
-      parameters: 
+      parameters:
         - name: subject
           in: query
           description: subject e.g. role 'user'
           required: false
           type: string
       tags:
-      - "Policies"
+        - "Policies"
       summary: "Get all policies"
       description: "Get all static and dynamically generated swagger specifications from the repositories and services"
       produces:
-      - "application/json"
+        - "application/json"
       responses:
         200:
           description: "Returns list of policies"
-          schema: 
-            items: 
-              $ref: "#/definitions/Policy" 
+          schema:
+            items:
+              $ref: "#/definitions/Policy"
             type: "array"
     post:
       tags:
@@ -35,14 +35,14 @@ paths:
       summary: "Create new policy"
       description: ""
       produces:
-        - "application/json"        
+        - "application/json"
       responses:
         200:
           description: "Returns message"
-          schema: 
-            $ref: "#/definitions/Message" 
+          schema:
+            $ref: "#/definitions/Message"
   /policies/{policy_id}:
-    parameters: 
+    parameters:
       - name: policy_id
         in: path
         description: Identifies a policy
@@ -58,7 +58,7 @@ paths:
       responses:
         200:
           description: "Returns message"
-          schema: 
+          schema:
             $ref: "#/definitions/Message"
   /access:
     post:
@@ -71,25 +71,54 @@ paths:
       responses:
         200:
           description: "Returns message"
-          schema: 
-            $ref: "#/definitions/Message" 
-definitions: 
-  Policy: 
+          schema:
+            $ref: "#/definitions/Message"
+  /allowed:
+    post:
+      tags:
+        - "Authorization Check"
+      summary: ""
+      description: ""
+      consumes:
+        - "application/json"
+      parameters:
+        - in: body
+          name: "Allowed request"
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                method:
+                  type: string
+                  description: A HTTP method (GET, POST, DELETE, PUT, HEAD)
+                endpoint:
+                  type: string
+                  description: The requested api endpoint (i. e. '/ladon/allowed')
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Returns message"
+          schema:
+            $ref: "#/definitions/Allowed"
+definitions:
+  Policy:
     type: object
     properties:
       Subjects:
         type: array
-        items: 
+        items:
           type: string
         description: List of subjects
       Actions:
         type: array
-        items: 
+        items:
           type: string
         description: List of actions
       Resources:
         type: array
-        items: 
+        items:
           type: string
         description: List of resources
       Effect:
@@ -97,13 +126,18 @@ definitions:
         description: decides if the policy should allow or disallow
       ID:
         type: string
-        description: policy id 
+        description: policy id
   Message:
     type: object
     properties:
       Result:
         type: string
-        description: Indicates if request was successful or not 
+        description: Indicates if request was successful or not
       Error:
         type: string
         description: Detailed error message
+  Allowed:
+    type: array
+    items:
+      type: boolean
+      description: Array describing if the user is allowed to make the requests. Ordered in the same way as requested.
