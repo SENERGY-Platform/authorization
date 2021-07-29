@@ -1,15 +1,15 @@
 module github.com/SENERGY-Platform/authorization
 
-go 1.14
+go 1.16
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/containerd/continuity v0.0.0-20200413184840-d3ef23f19fbb // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
+	github.com/golang-jwt/jwt v3.2.1+incompatible
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/jmoiron/sqlx v1.2.0

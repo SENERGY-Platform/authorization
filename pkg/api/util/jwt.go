@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 	"log"
 	"net/http"
 	"strings"
