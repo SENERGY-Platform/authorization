@@ -16,7 +16,6 @@ require (
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/lib/pq v1.5.0
 	github.com/opencontainers/image-spec v1.0.1 // indirect
-	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/ory/dockertest v3.3.5+incompatible // indirect
 	github.com/ory/ladon v0.8.10
 	github.com/ory/pagination v0.0.1 // indirect
@@ -24,4 +23,8 @@ require (
 	github.com/rubenv/sql-migrate v0.0.0-20200429072036-ae26b214fa43 // indirect
 	github.com/stretchr/testify v1.5.1 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
+)
+
+replace (
+	github.com/ory/dockertest v3.3.5+incompatible => github.com/ory/dockertest/v3 v3.7.0
 )
