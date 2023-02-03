@@ -36,8 +36,9 @@ type errorResponse struct {
 	Message string `json:"message"`
 }
 type checkResponse struct {
-	UserId string   `json:"userID"`
-	Roles  []string `json:"roles"`
+	UserId   string   `json:"userID"`
+	Roles    []string `json:"roles"`
+	Username string   `json:"username"`
 }
 
 type checkRequest struct {
@@ -70,8 +71,9 @@ func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt 
 		}
 
 		response := checkResponse{
-			UserId: user,
-			Roles:  roles,
+			UserId:   user,
+			Username: username,
+			Roles:    roles,
 		}
 		r := ladon.Request{
 			Resource: "endpoints" + strings.ReplaceAll(checkR.Headers.TargetUri, "/", ":"),
