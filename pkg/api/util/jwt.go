@@ -21,7 +21,7 @@ func NewJwt(config configuration.Config) Jwt {
 const PEM_BEGIN = "-----BEGIN PUBLIC KEY-----"
 const PEM_END = "-----END PUBLIC KEY-----"
 
-func (this Jwt) Parse(token string) (username string, user string, roles []string, err error) {
+func (this Jwt) Parse(token string) (username string, user string, roles []string, clientId string, err error) {
 	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		switch this.config.JwtSigningMethod {
@@ -48,44 +48,48 @@ func (this Jwt) Parse(token string) (username string, user string, roles []strin
 			log.Println("DEBUG: unable to parse jwt: ", err)
 		}
 		err = errors.New("unable to parse jwt")
-		return username, user, roles, err
+		return username, user, roles, clientId, err
 	}
 
 	if !jwtToken.Valid {
-		return username, user, roles, errors.New("invalid jwt")
+		return username, user, roles, clientId, errors.New("invalid jwt")
 	}
 
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return username, user, roles, errors.New("missing jwt claims")
+		return username, user, roles, clientId, errors.New("missing jwt claims")
 	}
 	user, ok = claims["sub"].(string)
 	if !ok {
-		return username, user, roles, errors.New("missing jwt sub")
+		return username, user, roles, clientId, errors.New("missing jwt sub")
 	}
 	username, ok = claims["preferred_username"].(string)
 	if !ok {
-		return username, user, roles, errors.New("missing jwt realm_access.preferred_username")
+		return username, user, roles, clientId, errors.New("missing jwt realm_access.preferred_username")
 	}
 	realmAccess, ok := claims["realm_access"].(map[string]interface{})
 	if !ok {
-		return username, user, roles, errors.New("missing jwt realm_access")
+		return username, user, roles, clientId, errors.New("missing jwt realm_access")
 	}
 	realmRoles, ok := realmAccess["roles"].([]interface{})
 	if !ok {
-		return username, user, roles, errors.New("missing jwt realm_access.roles")
+		return username, user, roles, clientId, errors.New("missing jwt realm_access.roles")
 	}
 	for _, role := range realmRoles {
 		roleName, ok := role.(string)
 		if !ok {
-			return username, user, roles, errors.New("jwt realm_access.roles enty is not string")
+			return username, user, roles, clientId, errors.New("jwt realm_access.roles enty is not string")
 		}
 		roles = append(roles, roleName)
+	}
+	clientId, ok = realmAccess["azp"].(string)
+	if !ok {
+		return username, user, roles, clientId, errors.New("missing jwt azp")
 	}
 	return
 }
 
-func (this Jwt) ParseRequest(request *http.Request) (username string, user string, roles []string, err error) {
+func (this Jwt) ParseRequest(request *http.Request) (username string, user string, roles []string, clientId string, err error) {
 	auth := request.Header.Get("Authorization")
 	if auth == "" {
 		err = errors.New("missing Authorization header")
@@ -93,14 +97,14 @@ func (this Jwt) ParseRequest(request *http.Request) (username string, user strin
 	return this.ParseHeader(auth)
 }
 
-func (this Jwt) ParseToken(token string) (username string, user string, roles []string, err error) {
+func (this Jwt) ParseToken(token string) (username string, user string, roles []string, clientId string, err error) {
 	return this.Parse(token)
 }
 
-func (this Jwt) ParseHeader(header string) (username string, user string, roles []string, err error) {
+func (this Jwt) ParseHeader(header string) (username string, user string, roles []string, clientId string, err error) {
 	token, err := removeType(header)
 	if err != nil {
-		return username, user, roles, err
+		return username, user, roles, clientId, err
 	}
 	return this.Parse(token)
 }

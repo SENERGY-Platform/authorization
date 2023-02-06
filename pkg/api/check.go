@@ -39,6 +39,7 @@ type checkResponse struct {
 	UserId   string   `json:"userID"`
 	Roles    []string `json:"roles"`
 	Username string   `json:"username"`
+	ClientId string   `json:"clientID"`
 }
 
 type checkRequest struct {
@@ -62,7 +63,7 @@ func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt 
 			fmt.Println(err.Error(), http.StatusBadRequest)
 			return
 		}
-		username, user, roles, err := jwt.ParseHeader(checkR.Headers.Authorization)
+		username, user, roles, clientId, err := jwt.ParseHeader(checkR.Headers.Authorization)
 		if err != nil {
 			writer.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(writer).Encode(&errorResponse{Message: err.Error()})
@@ -74,6 +75,7 @@ func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt 
 			UserId:   user,
 			Username: username,
 			Roles:    roles,
+			ClientId: clientId,
 		}
 		r := ladon.Request{
 			Resource: "endpoints" + strings.ReplaceAll(checkR.Headers.TargetUri, "/", ":"),

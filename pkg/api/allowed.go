@@ -52,7 +52,7 @@ func AllowedEndpoints(router *httprouter.Router, config configuration.Config, jw
 			fmt.Println(err.Error(), http.StatusBadRequest)
 			return
 		}
-		username, _, roles, err := jwt.ParseHeader(request.Header.Get("Authorization"))
+		username, _, roles, _, err := jwt.ParseHeader(request.Header.Get("Authorization"))
 		if err != nil {
 			writer.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(writer).Encode(&errorResponse{Message: err.Error()})
