@@ -82,7 +82,7 @@ func (this Jwt) Parse(token string) (username string, user string, roles []strin
 		}
 		roles = append(roles, roleName)
 	}
-	clientId, ok = realmAccess["azp"].(string)
+	clientId, ok = claims["azp"].(string)
 	if !ok {
 		return username, user, roles, clientId, errors.New("missing jwt azp")
 	}
