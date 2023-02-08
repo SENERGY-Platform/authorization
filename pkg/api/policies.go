@@ -19,8 +19,8 @@ package api
 import (
 	"encoding/json"
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
+	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/persistence/sql"
 	"github.com/julienschmidt/httprouter"
 	"github.com/ory/ladon"
 	"log"
@@ -35,7 +35,7 @@ func init() {
 	endpoints = append(endpoints, PoliciesEndpoints)
 }
 
-func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, jwt util.Jwt, persistence *sql.Persistence) {
+func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
 
 	router.GET(resourceLocation, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		subject := request.URL.Query()["subject"]
@@ -47,14 +47,14 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 			}
 
 			// filter for policies that matches the request
-			policies, err = persistence.Ladon.Manager.FindRequestCandidates(request)
+			policies, err = guard.Persistence.Ladon.Manager.FindRequestCandidates(request)
 			if err != nil {
 				http.Error(writer, "error at finding policies to the subject", http.StatusInternalServerError)
 				return
 			}
 
 		} else {
-			policies, err = persistence.Ladon.Manager.GetAll(1000, 0)
+			policies, err = guard.Persistence.Ladon.Manager.GetAll(1000, 0)
 			if err != nil {
 				http.Error(writer, "error at getting all policies", http.StatusInternalServerError)
 				return
@@ -81,7 +81,7 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 				http.Error(writer, "Will not delete policy admin-all: protected policy", http.StatusBadRequest)
 				return
 			}
-			_, err := persistence.Ladon.Manager.Get(id)
+			_, err := guard.Persistence.Ladon.Manager.Get(id)
 			if err != nil {
 				http.Error(writer, "policy with id "+id+" not found", http.StatusNotFound)
 				return
@@ -89,7 +89,7 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 		}
 
 		for _, id := range ids {
-			err := persistence.Ladon.Manager.Delete(id)
+			err := guard.Persistence.Ladon.Manager.Delete(id)
 			if err != nil {
 				http.Error(writer, "error at deleting policy", http.StatusInternalServerError)
 				return
@@ -107,11 +107,11 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 			return
 		}
 		for _, pol := range policies {
-			_, err = persistence.Ladon.Manager.Get(pol.ID)
+			_, err = guard.Persistence.Ladon.Manager.Get(pol.ID)
 			if err != nil {
-				err = persistence.Ladon.Manager.Create(&pol)
+				err = guard.Persistence.Ladon.Manager.Create(&pol)
 			} else {
-				err = persistence.Ladon.Manager.Update(&pol)
+				err = guard.Persistence.Ladon.Manager.Update(&pol)
 			}
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -131,14 +131,14 @@ func PoliciesEndpoints(router *httprouter.Router, config configuration.Config, j
 		}
 
 		for _, pol := range policies {
-			_, err = persistence.Ladon.Manager.Get(pol.GetID())
+			_, err = guard.Persistence.Ladon.Manager.Get(pol.GetID())
 			if err == nil {
 				http.Error(writer, "Policy with id "+pol.GetID()+" already exists", http.StatusBadRequest)
 				return
 			}
 		}
 		for _, pol := range policies {
-			err = persistence.Ladon.Manager.Create(&pol)
+			err = guard.Persistence.Ladon.Manager.Create(&pol)
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
 				return

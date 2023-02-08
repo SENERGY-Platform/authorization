@@ -18,14 +18,12 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
+	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/persistence/sql"
 	"github.com/julienschmidt/httprouter"
-	"github.com/ory/ladon"
+	"log"
 	"net/http"
-	"strings"
 )
 
 func init() {
@@ -52,70 +50,57 @@ type headers struct {
 	Authorization string `json:"authorization"`
 }
 
-func CheckEndpoints(router *httprouter.Router, config configuration.Config, jwt util.Jwt, persistence *sql.Persistence) {
+func CheckEndpoints(router *httprouter.Router, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
 	router.POST("/check", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		var checkR checkRequest
 		err := json.NewDecoder(request.Body).Decode(&checkR)
 		if err != nil {
 			writer.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(writer).Encode(&errorResponse{Message: "Could not parse request"})
-			fmt.Println(err.Error(), http.StatusBadRequest)
+			err = json.NewEncoder(writer).Encode(&errorResponse{Message: "Could not parse request"})
+			if err != nil {
+				log.Println("ERROR: " + err.Error())
+			}
 			return
 		}
-		username, user, roles, clientId, err := jwt.ParseHeader(checkR.Headers.Authorization)
+		username, userId, roles, clientId, err := jwt.ParseHeader(checkR.Headers.Authorization)
 		if err != nil {
 			writer.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(writer).Encode(&errorResponse{Message: err.Error()})
-			fmt.Println(err.Error(), http.StatusUnauthorized)
+			err = json.NewEncoder(writer).Encode(&errorResponse{Message: err.Error()})
+			if err != nil {
+				log.Println("ERROR: " + err.Error())
+			}
 			return
 		}
 
 		response := checkResponse{
-			UserId:   user,
+			UserId:   userId,
 			Username: username,
 			Roles:    roles,
 			ClientId: clientId,
 		}
-		r := ladon.Request{
-			Resource: "endpoints" + strings.ReplaceAll(checkR.Headers.TargetUri, "/", ":"),
-			Action:   checkR.Headers.TargetMethod,
-		}
+		err = guard.Authorize(&authorization.Request{
+			UserId:       userId,
+			Roles:        roles,
+			Username:     username,
+			ClientId:     clientId,
+			TargetMethod: checkR.Headers.TargetMethod,
+			TargetUri:    checkR.Headers.TargetUri,
+		})
 
-		if r.Action == http.MethodOptions {
-			// OPTIONS is allowed for authenticated users
+		if err == nil {
 			err = json.NewEncoder(writer).Encode(response)
-			if config.Debug {
-				fmt.Println("allowed debug")
+			if err != nil {
+				log.Println("ERROR: " + err.Error())
 			}
 			return
 		}
 
-		for _, role := range roles {
-			if role == "admin" {
-				// admin is allowed everything
-				err = json.NewEncoder(writer).Encode(response)
-				if config.Debug {
-					fmt.Println("allowed admin")
-				}
-				return
-			}
-		}
-
-		subjects := append(roles, username)
-
-		for _, subject := range subjects {
-			r.Subject = subject
-			err := persistence.Ladon.IsAllowed(&r)
-			if err == nil {
-				err = json.NewEncoder(writer).Encode(response)
-				return
-			}
-		}
-
-		fmt.Println(http.StatusForbidden)
 		writer.WriteHeader(http.StatusForbidden)
 		err = json.NewEncoder(writer).Encode(&errorResponse{Message: "Forbidden"})
+		if err != nil {
+			log.Println("ERROR: " + err.Error())
+		}
 	})
 
 }

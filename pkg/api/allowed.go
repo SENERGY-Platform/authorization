@@ -18,14 +18,12 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
+	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/persistence/sql"
 	"github.com/julienschmidt/httprouter"
-	"github.com/ory/ladon"
+	"log"
 	"net/http"
-	"strings"
 )
 
 func init() {
@@ -41,66 +39,50 @@ type allowedResponse struct {
 	Allowed []bool `json:"allowed"`
 }
 
-func AllowedEndpoints(router *httprouter.Router, config configuration.Config, jwt util.Jwt, persistence *sql.Persistence) {
+func AllowedEndpoints(router *httprouter.Router, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
 	router.POST("/allowed", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		writer.Header().Set("Content-Type", "application/json")
 		var allowedQuestions []allowedQuestion
 		err := json.NewDecoder(request.Body).Decode(&allowedQuestions)
 		if err != nil {
 			writer.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(writer).Encode(&errorResponse{Message: "Could not parse request"})
-			fmt.Println(err.Error(), http.StatusBadRequest)
+			err = json.NewEncoder(writer).Encode(&errorResponse{Message: "Could not parse request"})
+			if err != nil {
+				log.Println("ERROR: " + err.Error())
+			}
 			return
 		}
-		username, _, roles, _, err := jwt.ParseHeader(request.Header.Get("Authorization"))
+		username, userId, roles, clientId, err := jwt.ParseHeader(request.Header.Get("Authorization"))
 		if err != nil {
 			writer.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(writer).Encode(&errorResponse{Message: err.Error()})
-			fmt.Println(err.Error(), http.StatusUnauthorized)
+			err = json.NewEncoder(writer).Encode(&errorResponse{Message: err.Error()})
+			if err != nil {
+				log.Println("ERROR: " + err.Error())
+			}
 			return
 		}
-
-		subjects := append(roles, username)
 
 		var resp allowedResponse
 
 		for _, allowedQuestion := range allowedQuestions {
-			r := ladon.Request{
-				Resource: "endpoints" + strings.ReplaceAll(allowedQuestion.Endpoint, "/", ":"),
-				Action:   allowedQuestion.Method,
+			err = guard.Authorize(&authorization.Request{
+				UserId:       userId,
+				Roles:        roles,
+				Username:     username,
+				ClientId:     clientId,
+				TargetMethod: allowedQuestion.Method,
+				TargetUri:    allowedQuestion.Endpoint,
+			})
+			if err == nil {
+				resp.Allowed = append(resp.Allowed, true)
+			} else {
+				resp.Allowed = append(resp.Allowed, false)
 			}
-			resp.Allowed = append(resp.Allowed, isAllowed(config, subjects, r, persistence))
 		}
 
-		json.NewEncoder(writer).Encode(resp)
+		err = json.NewEncoder(writer).Encode(resp)
+		if err != nil {
+			log.Println("ERROR: " + err.Error())
+		}
 	})
-}
-
-func isAllowed(config configuration.Config, subjects []string, r ladon.Request, persistence *sql.Persistence) bool {
-	if r.Action == http.MethodOptions {
-		// OPTIONS is allowed for authenticated users
-		if config.Debug {
-			fmt.Println("allowed options")
-		}
-		return true
-	}
-
-	for _, role := range subjects {
-		if role == "admin" {
-			// admin is allowed everything
-			if config.Debug {
-				fmt.Println("allowed admin")
-			}
-			return true
-		}
-	}
-
-	for _, subject := range subjects {
-		r.Subject = subject
-		err := persistence.Ladon.IsAllowed(&r)
-		if err == nil {
-			return true
-		}
-	}
-	return false
 }

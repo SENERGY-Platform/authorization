@@ -20,8 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
+	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/persistence/sql"
 	"github.com/julienschmidt/httprouter"
 	"github.com/ory/ladon"
 	"net/http"
@@ -36,7 +36,7 @@ type KongMessage struct {
 	Error  string `json:"error"`
 }
 
-func AccessEndpoint(router *httprouter.Router, config configuration.Config, jwt util.Jwt, persistence *sql.Persistence) {
+func AccessEndpoint(router *httprouter.Router, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
 	router.GET("/access", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		writer.Header().Set("Content-Type", "application/json")
 		var ladonRequest ladon.Request
@@ -44,12 +44,11 @@ func AccessEndpoint(router *httprouter.Router, config configuration.Config, jwt 
 		err := json.NewDecoder(request.Body).Decode(&ladonRequest)
 		if err != nil {
 			writer.WriteHeader(400)
-			fmt.Println(err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		var message KongMessage
-		err = persistence.Ladon.IsAllowed(&ladonRequest)
+		err = guard.IsAllowed(&ladonRequest)
 		if err != nil {
 			message = KongMessage{
 				false,
