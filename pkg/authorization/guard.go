@@ -68,6 +68,12 @@ func (g *Guard) Authorize(checkR *Request) error {
 		}
 	}
 
+	r.Subject = checkR.ClientId
+	err := g.Persistence.Ladon.IsAllowed(&r)
+	if err != nil {
+		return err
+	}
+
 	subjects := append(checkR.Roles, checkR.Username)
 
 	for _, subject := range subjects {
