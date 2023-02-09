@@ -69,12 +69,23 @@ func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util
 	})
 
 	router.DELETE(resourceLocation, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+		ids := []string{}
+
 		idQuery := request.URL.Query()["ids"]
-		if len(idQuery) == 0 {
+		if len(idQuery) > 0 {
+			ids = append(ids, strings.Split(idQuery[0], ",")...)
+		}
+
+		var bodyIds []string
+		err := json.NewDecoder(request.Body).Decode(&bodyIds)
+		if err == nil {
+			ids = append(ids, bodyIds...)
+		}
+
+		if len(ids) == 0 {
 			http.Error(writer, "expected policy id", http.StatusBadRequest)
 			return
 		}
-		ids := strings.Split(idQuery[0], ",")
 
 		for _, id := range ids {
 			if id == "admin-all" {
