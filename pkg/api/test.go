@@ -30,6 +30,15 @@ func init() {
 	endpoints = append(endpoints, TestEndpoints)
 }
 
+type TestResponse struct {
+	Get    bool `json:"GET"`
+	Post   bool `json:"POST"`
+	Put    bool `json:"PUT"`
+	Patch  bool `json:"PATCH"`
+	Delete bool `json:"DELETE"`
+	Head   bool `json:"HEAD"`
+}
+
 func TestEndpoints(router *httprouter.Router, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
 	router.POST("/test", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -44,13 +53,36 @@ func TestEndpoints(router *httprouter.Router, _ configuration.Config, _ util.Jwt
 			return
 		}
 
-		err = guard.Authorize(&checkR)
+		checkR.TargetMethod = http.MethodGet
+		get := guard.Authorize(&checkR)
 
-		if err == nil {
-			return
+		checkR.TargetMethod = http.MethodPost
+		post := guard.Authorize(&checkR)
+
+		checkR.TargetMethod = http.MethodPut
+		put := guard.Authorize(&checkR)
+
+		checkR.TargetMethod = http.MethodPatch
+		patch := guard.Authorize(&checkR)
+
+		checkR.TargetMethod = http.MethodDelete
+		del := guard.Authorize(&checkR)
+
+		checkR.TargetMethod = http.MethodHead
+		head := guard.Authorize(&checkR)
+
+		err = json.NewEncoder(writer).Encode(TestResponse{
+			Get:    get == nil,
+			Post:   post == nil,
+			Put:    put == nil,
+			Patch:  patch == nil,
+			Delete: del == nil,
+			Head:   head == nil,
+		})
+		if err != nil {
+			log.Println("ERROR: " + err.Error())
 		}
-
-		http.Error(writer, "Forbidden", http.StatusForbidden)
+		return
 	})
 
 }
