@@ -24,6 +24,7 @@ import (
 	"github.com/ory/ladon"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 type Request struct {
@@ -84,6 +85,27 @@ func (g *Guard) Authorize(checkR *Request) error {
 		}
 	}
 	return errors.New("unauthorized")
+}
+
+func (g *Guard) AuthorizeList(checkR []*Request, parallel bool) []error {
+	res := make([]error, len(checkR))
+	wg := sync.WaitGroup{}
+	wg.Add(len(checkR))
+	f := func(i int, r *Request) {
+		res[i] = g.Authorize(r)
+		wg.Done()
+	}
+
+	for i, r := range checkR {
+		i := i
+		if parallel {
+			go f(i, r)
+		} else {
+			f(i, r)
+		}
+	}
+	wg.Wait()
+	return res
 }
 
 func (g *Guard) IsAllowed(ladonRequest *ladon.Request) error {

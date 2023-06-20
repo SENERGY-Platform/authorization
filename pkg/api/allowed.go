@@ -64,8 +64,10 @@ func AllowedEndpoints(router *httprouter.Router, _ configuration.Config, jwt uti
 
 		var resp allowedResponse
 
+		list := []*authorization.Request{}
+
 		for _, allowedQuestion := range allowedQuestions {
-			err = guard.Authorize(&authorization.Request{
+			list = append(list, &authorization.Request{
 				UserId:       userId,
 				Roles:        roles,
 				Username:     username,
@@ -73,6 +75,10 @@ func AllowedEndpoints(router *httprouter.Router, _ configuration.Config, jwt uti
 				TargetMethod: allowedQuestion.Method,
 				TargetUri:    allowedQuestion.Endpoint,
 			})
+		}
+		res := guard.AuthorizeList(list, false)
+
+		for _, err := range res {
 			if err == nil {
 				resp.Allowed = append(resp.Allowed, true)
 			} else {
