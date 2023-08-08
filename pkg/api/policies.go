@@ -49,14 +49,14 @@ func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util
 			// filter for policies that matches the request
 			policies, err = guard.Persistence.Ladon.Manager.FindRequestCandidates(request)
 			if err != nil {
-				http.Error(writer, "error at finding policies to the subject", http.StatusInternalServerError)
+				http.Error(writer, "error at finding policies to the subject: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 
 		} else {
 			policies, err = guard.Persistence.Ladon.Manager.GetAll(1000, 0)
 			if err != nil {
-				http.Error(writer, "error at getting all policies", http.StatusInternalServerError)
+				http.Error(writer, "error at getting all policies: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
@@ -102,7 +102,7 @@ func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util
 		for _, id := range ids {
 			err := guard.Persistence.Ladon.Manager.Delete(id)
 			if err != nil {
-				http.Error(writer, "error at deleting policy", http.StatusInternalServerError)
+				http.Error(writer, "error at deleting policy: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 		}
@@ -114,7 +114,7 @@ func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util
 		var policies []ladon.DefaultPolicy
 		err := json.NewDecoder(request.Body).Decode(&policies)
 		if err != nil {
-			http.Error(writer, "Could not parse policies", http.StatusBadRequest)
+			http.Error(writer, "Could not parse policies: "+err.Error(), http.StatusBadRequest)
 			return
 		}
 		for _, pol := range policies {
