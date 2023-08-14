@@ -14,18 +14,20 @@
  *    limitations under the License.
  */
 
-package sql
+package persistence
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/ladon"
 	"log"
 	"runtime/debug"
 	"sync"
+	"time"
 )
 
 import _ "github.com/lib/pq"
@@ -33,8 +35,10 @@ import _ "github.com/lib/pq"
 import manager "github.com/ory/ladon/manager/sql"
 
 type Persistence struct {
-	db    *sqlx.DB
-	Ladon *ladon.Ladon
+	db              *sqlx.DB
+	ladon           *ladon.Ladon
+	mc              *memcache.Client
+	debounceMcError *time.Time
 }
 
 func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (result *Persistence, err error) {
@@ -75,7 +79,7 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 		}
 		wg.Done()
 	}()
-	result = &Persistence{db: db, Ladon: warden}
+	result = &Persistence{db: db, ladon: warden, mc: memcache.New(config.MemcachedUrls...)}
 	err = result.migration()
 	return result, err
 }

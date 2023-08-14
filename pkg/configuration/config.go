@@ -28,15 +28,16 @@ import (
 )
 
 type ConfigStruct struct {
-	ApiPort             string `json:"api_port"`
-	JwtSigningMethod    string `json:"jwt_signing_method"` //"rsa", "hmac"
-	JwtSigningKey       string `json:"jwt_signing_key"`
-	SqlConnectionString string `json:"sql_connection_string"`
-	PostgresHost        string `json:"postgres_host"`
-	PostgresUser        string `json:"postgres_user"`
-	PostgresPassword    string `json:"postgres_password"`
-	PostgresDb          string `json:"postgres_db"`
-	Debug               bool   `json:"debug"`
+	ApiPort             string   `json:"api_port"`
+	JwtSigningMethod    string   `json:"jwt_signing_method"` //"rsa", "hmac"
+	JwtSigningKey       string   `json:"jwt_signing_key"`
+	SqlConnectionString string   `json:"sql_connection_string"`
+	PostgresHost        string   `json:"postgres_host"`
+	PostgresUser        string   `json:"postgres_user"`
+	PostgresPassword    string   `json:"postgres_password"`
+	PostgresDb          string   `json:"postgres_db"`
+	MemcachedUrls       []string `json:"memcached_urls"`
+	Debug               bool     `json:"debug"`
 }
 
 type Config = *ConfigStruct

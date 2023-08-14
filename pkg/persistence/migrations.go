@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package sql
+package persistence
 
 import (
 	"github.com/ory/ladon"
@@ -31,11 +31,11 @@ func (this *Persistence) migration() (err error) {
 		Actions:     []string{"POST", "GET", "DELETE", "PATCH", "PUT", "HEAD"},
 		Effect:      ladon.AllowAccess,
 	}
-	_, err = this.Ladon.Manager.Get(pol.ID)
+	_, err = this.ladon.Manager.Get(pol.ID)
 	if err == nil {
-		err = this.Ladon.Manager.Update(pol)
+		err = this.ladon.Manager.Update(pol)
 	} else {
-		err = this.Ladon.Manager.Create(pol)
+		err = this.ladon.Manager.Create(pol)
 	}
 	if err != nil {
 		log.Fatal("Could not create initial policy: ", err)

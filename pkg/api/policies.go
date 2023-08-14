@@ -47,14 +47,14 @@ func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util
 			}
 
 			// filter for policies that matches the request
-			policies, err = guard.Persistence.Ladon.Manager.FindRequestCandidates(request)
+			policies, err = guard.Persistence.FindRequestCandidates(request)
 			if err != nil {
 				http.Error(writer, "error at finding policies to the subject: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
 
 		} else {
-			policies, err = guard.Persistence.Ladon.Manager.GetAll(1000, 0)
+			policies, err = guard.Persistence.GetAll(1000, 0)
 			if err != nil {
 				http.Error(writer, "error at getting all policies: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -92,7 +92,7 @@ func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util
 				http.Error(writer, "Will not delete policy admin-all: protected policy", http.StatusBadRequest)
 				return
 			}
-			_, err := guard.Persistence.Ladon.Manager.Get(id)
+			_, err := guard.Persistence.Get(id)
 			if err != nil {
 				http.Error(writer, "policy with id "+id+" not found", http.StatusNotFound)
 				return
@@ -100,7 +100,7 @@ func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util
 		}
 
 		for _, id := range ids {
-			err := guard.Persistence.Ladon.Manager.Delete(id)
+			err := guard.Persistence.Delete(id)
 			if err != nil {
 				http.Error(writer, "error at deleting policy: "+err.Error(), http.StatusInternalServerError)
 				return
@@ -118,11 +118,11 @@ func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util
 			return
 		}
 		for _, pol := range policies {
-			_, err = guard.Persistence.Ladon.Manager.Get(pol.ID)
+			_, err = guard.Persistence.Get(pol.ID)
 			if err != nil {
-				err = guard.Persistence.Ladon.Manager.Create(&pol)
+				err = guard.Persistence.Create(&pol)
 			} else {
-				err = guard.Persistence.Ladon.Manager.Update(&pol)
+				err = guard.Persistence.Update(&pol)
 			}
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -142,14 +142,14 @@ func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util
 		}
 
 		for _, pol := range policies {
-			_, err = guard.Persistence.Ladon.Manager.Get(pol.GetID())
+			_, err = guard.Persistence.Get(pol.GetID())
 			if err == nil {
 				http.Error(writer, "Policy with id "+pol.GetID()+" already exists", http.StatusBadRequest)
 				return
 			}
 		}
 		for _, pol := range policies {
-			err = guard.Persistence.Ladon.Manager.Create(&pol)
+			err = guard.Persistence.Create(&pol)
 			if err != nil {
 				http.Error(writer, err.Error(), http.StatusInternalServerError)
 				return

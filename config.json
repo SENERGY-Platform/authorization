@@ -6,5 +6,6 @@
   "postgres_user": "",
   "postgres_password": "",
   "postgres_db" : "",
+  "memcached_urls": [],
   "debug": true
 }

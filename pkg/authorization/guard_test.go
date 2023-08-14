@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/persistence/sql"
+	"github.com/SENERGY-Platform/authorization/pkg/persistence"
 	"sync"
 	"testing"
 )
@@ -61,7 +61,7 @@ func setup() (guard *Guard, cancel context.CancelFunc, err error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := &sync.WaitGroup{}
 
-	db, err := sql.New(ctx, wg, config)
+	db, err := persistence.New(ctx, wg, config)
 	if err != nil {
 		return
 	}

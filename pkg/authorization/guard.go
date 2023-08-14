@@ -20,7 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/persistence/sql"
+	"github.com/SENERGY-Platform/authorization/pkg/persistence"
 	"github.com/ory/ladon"
 	"net/http"
 	"strings"
@@ -38,10 +38,10 @@ type Request struct {
 
 type Guard struct {
 	config      configuration.Config
-	Persistence *sql.Persistence
+	Persistence *persistence.Persistence
 }
 
-func NewGuard(config configuration.Config, persistence *sql.Persistence) *Guard {
+func NewGuard(config configuration.Config, persistence *persistence.Persistence) *Guard {
 	return &Guard{
 		config:      config,
 		Persistence: persistence,
@@ -70,19 +70,24 @@ func (g *Guard) Authorize(checkR *Request) error {
 	}
 
 	r.Subject = checkR.ClientId
-	err := g.Persistence.Ladon.IsAllowed(&r)
+	err := g.Persistence.IsAllowed(&r)
 	if err != nil {
 		return err
 	}
 
 	subjects := append(checkR.Roles, checkR.Username)
 
+	requests := []ladon.Request{}
 	for _, subject := range subjects {
-		r.Subject = subject
-		err := g.Persistence.Ladon.IsAllowed(&r)
-		if err == nil {
-			return nil
-		}
+		requests = append(requests, ladon.Request{
+			Resource: "endpoints" + strings.ReplaceAll(checkR.TargetUri, "/", ":"),
+			Action:   checkR.TargetMethod,
+			Subject:  subject,
+		})
+	}
+	err = g.Persistence.IsAnyAllowed(requests)
+	if err == nil {
+		return nil
 	}
 	return errors.New("unauthorized")
 }
@@ -109,5 +114,5 @@ func (g *Guard) AuthorizeList(checkR []*Request, parallel bool) []error {
 }
 
 func (g *Guard) IsAllowed(ladonRequest *ladon.Request) error {
-	return g.Persistence.Ladon.IsAllowed(ladonRequest)
+	return g.Persistence.IsAllowed(ladonRequest)
 }
