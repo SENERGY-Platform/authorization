@@ -18,10 +18,11 @@ package persistence
 
 import (
 	"encoding/json"
-	"github.com/bradfitz/gomemcache/memcache"
-	"github.com/ory/ladon"
 	"log"
 	"time"
+
+	"github.com/bradfitz/gomemcache/memcache"
+	"github.com/ory/ladon"
 )
 
 var bTrue byte = 1

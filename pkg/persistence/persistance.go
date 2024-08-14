@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/bradfitz/gomemcache/memcache"
+	"github.com/SENERGY-Platform/authorization/pkg/persistence/memcache"
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/ladon"
 	"log"
@@ -37,11 +37,16 @@ import manager "github.com/ory/ladon/manager/sql"
 type Persistence struct {
 	db              *sqlx.DB
 	ladon           *ladon.Ladon
-	mc              *memcache.Client
+	mc              *memcache.Memcache
 	debounceMcError *time.Time
 }
 
 func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (result *Persistence, err error) {
+	mc, err := memcache.New(config.MemcachedUrls)
+	if err != nil {
+		return nil, err
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New(fmt.Sprint("panic during db init: ", r))
@@ -79,7 +84,8 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 		}
 		wg.Done()
 	}()
-	result = &Persistence{db: db, ladon: warden, mc: memcache.New(config.MemcachedUrls...)}
+
+	result = &Persistence{db: db, ladon: warden, mc: mc}
 	err = result.migration()
 	return result, err
 }
