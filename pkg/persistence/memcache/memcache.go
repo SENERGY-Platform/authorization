@@ -68,7 +68,7 @@ func (m *Memcache) GetMulti(keys []string) (map[string]*upstream.Item, error) {
 
 func withReconnectRetry[T any](m *Memcache, cmd func() (T, error)) (t T, err error) {
 	t, err = cmd()
-	if err != nil && strings.Contains(err.Error(), "no servers configured or available") {
+	if err != nil && (strings.Contains(err.Error(), "no servers configured or available") || strings.Contains(err.Error(), "connect timeout")) {
 		defer m.mux.Unlock()
 		locked := m.mux.TryLock()
 		if !locked {
