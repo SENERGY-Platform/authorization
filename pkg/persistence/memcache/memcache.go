@@ -18,6 +18,7 @@ package memcache
 
 import (
 	"log"
+	"sync"
 
 	upstream "github.com/bradfitz/gomemcache/memcache"
 )
@@ -26,11 +27,13 @@ import (
 type Memcache struct {
 	mc      *upstream.Client
 	servers []string
+	mux     sync.Mutex
 }
 
 func New(servers []string) (*Memcache, error) {
 	m := &Memcache{
 		servers: servers,
+		mux:     sync.Mutex{},
 	}
 	err := m.reconnect()
 	return m, err
@@ -65,6 +68,15 @@ func (m *Memcache) GetMulti(keys []string) (map[string]*upstream.Item, error) {
 func withReconnectRetry[T any](m *Memcache, cmd func() (T, error)) (t T, err error) {
 	t, err = cmd()
 	if err != nil {
+		defer m.mux.Unlock()
+		locked := m.mux.TryLock()
+		if !locked {
+			m.mux.Lock()
+			t, err = cmd() // as the mutex was already locked, reconnect was likely called and cmd might work now
+			if err == nil {
+				return
+			}
+		}
 		err = m.reconnect()
 		if err != nil {
 			return t, err
