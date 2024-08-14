@@ -18,6 +18,7 @@ package memcache
 
 import (
 	"log"
+	"strings"
 	"sync"
 
 	upstream "github.com/bradfitz/gomemcache/memcache"
@@ -67,7 +68,7 @@ func (m *Memcache) GetMulti(keys []string) (map[string]*upstream.Item, error) {
 
 func withReconnectRetry[T any](m *Memcache, cmd func() (T, error)) (t T, err error) {
 	t, err = cmd()
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "no servers configured or available") {
 		defer m.mux.Unlock()
 		locked := m.mux.TryLock()
 		if !locked {
