@@ -18,16 +18,18 @@ package api
 
 import (
 	"context"
-	"github.com/SENERGY-Platform/authorization/pkg/api/util"
-	"github.com/SENERGY-Platform/authorization/pkg/authorization"
-	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/julienschmidt/httprouter"
 	"log"
 	"net/http"
 	"reflect"
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/SENERGY-Platform/authorization/pkg/api/util"
+	"github.com/SENERGY-Platform/authorization/pkg/authorization"
+	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
+	"github.com/julienschmidt/httprouter"
 )
 
 var endpoints = []func(router *httprouter.Router, config configuration.Config, jwt util.Jwt, guard *authorization.Guard){}
@@ -61,6 +63,5 @@ func Router(config configuration.Config, guard *authorization.Guard) http.Handle
 		e(router, config, jwt, guard)
 	}
 	log.Println("add logging and cors")
-	corsHandler := util.NewCors(router)
-	return util.NewLogger(corsHandler)
+	return accesslog.New(util.NewCors(router))
 }
