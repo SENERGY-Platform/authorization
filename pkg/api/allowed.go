@@ -40,7 +40,22 @@ type allowedResponse struct {
 }
 
 func AllowedEndpoints(router *gin.Engine, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
-	router.POST("/allowed", func(c *gin.Context) {
+	router.POST("/allowed", allowedHandler(jwt, guard))
+}
+
+// allowedHandler godoc
+// @Summary Check multiple access rights
+// @Description Evaluates whether the authenticated user is allowed to access a list of method+endpoint combinations.
+// @Tags allowed
+// @Accept json
+// @Produce json
+// @Param questions body []allowedQuestion true "List of method/endpoint pairs to check"
+// @Success 200 {object} allowedResponse
+// @Failure 400 {string} ErrorResponse
+// @Failure 401 {string} ErrorResponse
+// @Router /allowed [post]
+func allowedHandler(jwt util.Jwt, guard *authorization.Guard) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var allowedQuestions []allowedQuestion
 		err := c.ShouldBindJSON(&allowedQuestions)
 		if err != nil {
@@ -78,5 +93,5 @@ func AllowedEndpoints(router *gin.Engine, _ configuration.Config, jwt util.Jwt, 
 		}
 
 		c.JSON(200, resp)
-	})
+	}
 }

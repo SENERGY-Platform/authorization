@@ -1,0 +1,396 @@
+basePath: /
+definitions:
+  api.KongMessage:
+    properties:
+      error:
+        type: string
+      result:
+        type: boolean
+    type: object
+  api.TestResponse:
+    properties:
+      DELETE:
+        type: boolean
+      GET:
+        type: boolean
+      HEAD:
+        type: boolean
+      PATCH:
+        type: boolean
+      POST:
+        type: boolean
+      PUT:
+        type: boolean
+    type: object
+  api.allowedQuestion:
+    properties:
+      endpoint:
+        type: string
+      method:
+        type: string
+    type: object
+  api.allowedResponse:
+    properties:
+      allowed:
+        items:
+          type: boolean
+        type: array
+    type: object
+  api.checkRequest:
+    properties:
+      headers:
+        $ref: '#/definitions/api.headers'
+    type: object
+  api.checkResponse:
+    properties:
+      clientID:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      userID:
+        type: string
+      username:
+        type: string
+    type: object
+  api.headers:
+    properties:
+      authorization:
+        type: string
+      target_method:
+        type: string
+      target_uri:
+        type: string
+    type: object
+  authorization.Request:
+    properties:
+      clientID:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      target_method:
+        type: string
+      target_uri:
+        type: string
+      userID:
+        type: string
+      username:
+        type: string
+    type: object
+  ladon.Conditions:
+    additionalProperties: {}
+    type: object
+  ladon.Context:
+    additionalProperties: true
+    type: object
+  ladon.DefaultPolicy:
+    properties:
+      actions:
+        items:
+          type: string
+        type: array
+      conditions:
+        $ref: '#/definitions/ladon.Conditions'
+      description:
+        type: string
+      effect:
+        type: string
+      id:
+        type: string
+      meta:
+        items:
+          type: integer
+        type: array
+      resources:
+        items:
+          type: string
+        type: array
+      subjects:
+        items:
+          type: string
+        type: array
+    type: object
+  ladon.Request:
+    properties:
+      action:
+        description: Action is the action that is requested on the resource.
+        type: string
+      context:
+        allOf:
+        - $ref: '#/definitions/ladon.Context'
+        description: Context is the request's environmental context.
+      resource:
+        description: Resource is the resource that access is requested to.
+        type: string
+      subject:
+        description: Subejct is the subject that is requesting access.
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Allows definition of policies and checking of access rights.
+  title: Authorization API
+paths:
+  /access:
+    get:
+      consumes:
+      - application/json
+      description: Evaluates a Ladon policy request and returns whether access is
+        allowed.
+      parameters:
+      - description: Ladon access request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ladon.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.KongMessage'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Check access via Ladon policy
+      tags:
+      - access
+  /allowed:
+    post:
+      consumes:
+      - application/json
+      description: Evaluates whether the authenticated user is allowed to access a
+        list of method+endpoint combinations.
+      parameters:
+      - description: List of method/endpoint pairs to check
+        in: body
+        name: questions
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/api.allowedQuestion'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.allowedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Check multiple access rights
+      tags:
+      - allowed
+  /check:
+    post:
+      consumes:
+      - application/json
+      description: Validates the JWT from the request body and checks whether access
+        to the given method/URI is permitted. Returns user details on success.
+      parameters:
+      - description: Check request with authorization header and target
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.checkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.checkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+      summary: Check access and return user info
+      tags:
+      - check
+  /doc:
+    get:
+      description: Returns the generated Swagger document for this service.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get OpenAPI document
+      tags:
+      - documentation
+  /policies:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes one or more policies by ID. IDs may be provided as a comma-separated
+        query parameter and/or a JSON array in the request body.
+      parameters:
+      - description: Comma-separated list of policy IDs to delete
+        in: query
+        name: ids
+        type: string
+      - description: List of policy IDs to delete
+        in: body
+        name: ids
+        schema:
+          items:
+            type: string
+          type: array
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete policies
+      tags:
+      - policies
+    get:
+      description: Returns all Ladon policies, optionally filtered by subject.
+      parameters:
+      - description: Filter policies by subject
+        in: query
+        name: subject
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/ladon.DefaultPolicy'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: List policies
+      tags:
+      - policies
+    post:
+      consumes:
+      - application/json
+      description: Creates a list of new Ladon policies. Returns an error if any policy
+        ID already exists.
+      parameters:
+      - description: List of policies to create
+        in: body
+        name: policies
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/ladon.DefaultPolicy'
+          type: array
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create new policies
+      tags:
+      - policies
+    put:
+      consumes:
+      - application/json
+      description: Creates new policies or updates existing ones. Existing policies
+        are updated; unknown IDs are created.
+      parameters:
+      - description: List of policies to create or update
+        in: body
+        name: policies
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/ladon.DefaultPolicy'
+          type: array
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create or update policies
+      tags:
+      - policies
+  /test:
+    post:
+      consumes:
+      - application/json
+      description: Checks whether the given user is allowed to access the specified
+        endpoint for each HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD).
+      parameters:
+      - description: Authorization request with user info and target URI
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authorization.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.TestResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+      summary: Test access for all HTTP methods
+      tags:
+      - test
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -40,7 +40,21 @@ type TestResponse struct {
 }
 
 func TestEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
-	router.POST("/test", func(c *gin.Context) {
+	router.POST("/test", testHandler(guard))
+}
+
+// testHandler godoc
+// @Summary Test access for all HTTP methods
+// @Description Checks whether the given user is allowed to access the specified endpoint for each HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD).
+// @Tags test
+// @Accept json
+// @Produce json
+// @Param request body authorization.Request true "Authorization request with user info and target URI"
+// @Success 200 {object} TestResponse
+// @Failure 400 {string} ErrorResponse
+// @Router /test [post]
+func testHandler(guard *authorization.Guard) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var checkRequest authorization.Request
 		if err := c.ShouldBindJSON(&checkRequest); err != nil {
 			c.Error(errors.Join(model.ErrBadRequest, err))
@@ -73,5 +87,5 @@ func TestEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, guard
 			Delete: deleteErr == nil,
 			Head:   headErr == nil,
 		})
-	})
+	}
 }

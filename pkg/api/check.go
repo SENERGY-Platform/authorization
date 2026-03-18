@@ -51,7 +51,23 @@ type headers struct {
 }
 
 func CheckEndpoints(router *gin.Engine, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
-	router.POST("/check", func(c *gin.Context) {
+	router.POST("/check", checkHandler(jwt, guard))
+}
+
+// checkHandler godoc
+// @Summary Check access and return user info
+// @Description Validates the JWT from the request body and checks whether access to the given method/URI is permitted. Returns user details on success.
+// @Tags check
+// @Accept json
+// @Produce json
+// @Param request body checkRequest true "Check request with authorization header and target"
+// @Success 200 {object} checkResponse
+// @Failure 400 {string} ErrorResponse
+// @Failure 401 {string} ErrorResponse
+// @Failure 403 {string} ErrorResponse
+// @Router /check [post]
+func checkHandler(jwt util.Jwt, guard *authorization.Guard) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var checkR checkRequest
 		err := c.ShouldBindJSON(&checkR)
 		if err != nil {
@@ -85,6 +101,5 @@ func CheckEndpoints(router *gin.Engine, _ configuration.Config, jwt util.Jwt, gu
 		}
 
 		c.Error(errors.Join(model.GetError(403), authErr))
-	})
-
+	}
 }

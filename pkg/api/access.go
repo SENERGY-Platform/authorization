@@ -37,7 +37,21 @@ type KongMessage struct {
 }
 
 func AccessEndpoint(router *gin.Engine, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
-	router.GET("/access", func(c *gin.Context) {
+	router.GET("/access", accessHandler(guard))
+}
+
+// accessHandler godoc
+// @Summary Check access via Ladon policy
+// @Description Evaluates a Ladon policy request and returns whether access is allowed.
+// @Tags access
+// @Accept json
+// @Produce json
+// @Param request body ladon.Request true "Ladon access request"
+// @Success 200 {object} KongMessage
+// @Failure 400 {string} ErrorResponse
+// @Router /access [get]
+func accessHandler(guard *authorization.Guard) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var ladonRequest ladon.Request
 
 		err := c.ShouldBindJSON(&ladonRequest)
@@ -61,6 +75,5 @@ func AccessEndpoint(router *gin.Engine, _ configuration.Config, _ util.Jwt, guar
 		}
 
 		c.JSON(model.GetStatusCode(nil), message)
-	})
-
+	}
 }

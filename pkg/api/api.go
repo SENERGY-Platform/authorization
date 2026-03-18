@@ -38,7 +38,13 @@ import (
 
 var endpoints = []func(router *gin.Engine, config configuration.Config, jwt util.Jwt, guard *authorization.Guard){}
 
-// starts http server; if wg is not nil it will be set as done when the server is stopped
+// Start godoc
+// @title Authorization API
+// @description Allows definition of policies and checking of access rights.
+// @BasePath /
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
 func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config, guard *authorization.Guard) (err error) {
 	log.Logger.Info("start api")
 	gin.SetMode(gin.ReleaseMode)

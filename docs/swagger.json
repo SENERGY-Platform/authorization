@@ -1,0 +1,596 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Allows definition of policies and checking of access rights.",
+        "title": "Authorization API",
+        "contact": {}
+    },
+    "basePath": "/",
+    "paths": {
+        "/access": {
+            "get": {
+                "description": "Evaluates a Ladon policy request and returns whether access is allowed.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "access"
+                ],
+                "summary": "Check access via Ladon policy",
+                "parameters": [
+                    {
+                        "description": "Ladon access request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ladon.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.KongMessage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/allowed": {
+            "post": {
+                "description": "Evaluates whether the authenticated user is allowed to access a list of method+endpoint combinations.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "allowed"
+                ],
+                "summary": "Check multiple access rights",
+                "parameters": [
+                    {
+                        "description": "List of method/endpoint pairs to check",
+                        "name": "questions",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/api.allowedQuestion"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.allowedResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/check": {
+            "post": {
+                "description": "Validates the JWT from the request body and checks whether access to the given method/URI is permitted. Returns user details on success.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "check"
+                ],
+                "summary": "Check access and return user info",
+                "parameters": [
+                    {
+                        "description": "Check request with authorization header and target",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.checkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.checkResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/doc": {
+            "get": {
+                "description": "Returns the generated Swagger document for this service.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "documentation"
+                ],
+                "summary": "Get OpenAPI document",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/policies": {
+            "get": {
+                "description": "Returns all Ladon policies, optionally filtered by subject.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "policies"
+                ],
+                "summary": "List policies",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter policies by subject",
+                        "name": "subject",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ladon.DefaultPolicy"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Creates new policies or updates existing ones. Existing policies are updated; unknown IDs are created.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "policies"
+                ],
+                "summary": "Create or update policies",
+                "parameters": [
+                    {
+                        "description": "List of policies to create or update",
+                        "name": "policies",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ladon.DefaultPolicy"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a list of new Ladon policies. Returns an error if any policy ID already exists.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "policies"
+                ],
+                "summary": "Create new policies",
+                "parameters": [
+                    {
+                        "description": "List of policies to create",
+                        "name": "policies",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ladon.DefaultPolicy"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes one or more policies by ID. IDs may be provided as a comma-separated query parameter and/or a JSON array in the request body.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "policies"
+                ],
+                "summary": "Delete policies",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Comma-separated list of policy IDs to delete",
+                        "name": "ids",
+                        "in": "query"
+                    },
+                    {
+                        "description": "List of policy IDs to delete",
+                        "name": "ids",
+                        "in": "body",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/test": {
+            "post": {
+                "description": "Checks whether the given user is allowed to access the specified endpoint for each HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "test"
+                ],
+                "summary": "Test access for all HTTP methods",
+                "parameters": [
+                    {
+                        "description": "Authorization request with user info and target URI",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/authorization.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.TestResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.KongMessage": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "result": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "api.TestResponse": {
+            "type": "object",
+            "properties": {
+                "DELETE": {
+                    "type": "boolean"
+                },
+                "GET": {
+                    "type": "boolean"
+                },
+                "HEAD": {
+                    "type": "boolean"
+                },
+                "PATCH": {
+                    "type": "boolean"
+                },
+                "POST": {
+                    "type": "boolean"
+                },
+                "PUT": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "api.allowedQuestion": {
+            "type": "object",
+            "properties": {
+                "endpoint": {
+                    "type": "string"
+                },
+                "method": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.allowedResponse": {
+            "type": "object",
+            "properties": {
+                "allowed": {
+                    "type": "array",
+                    "items": {
+                        "type": "boolean"
+                    }
+                }
+            }
+        },
+        "api.checkRequest": {
+            "type": "object",
+            "properties": {
+                "headers": {
+                    "$ref": "#/definitions/api.headers"
+                }
+            }
+        },
+        "api.checkResponse": {
+            "type": "object",
+            "properties": {
+                "clientID": {
+                    "type": "string"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "userID": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.headers": {
+            "type": "object",
+            "properties": {
+                "authorization": {
+                    "type": "string"
+                },
+                "target_method": {
+                    "type": "string"
+                },
+                "target_uri": {
+                    "type": "string"
+                }
+            }
+        },
+        "authorization.Request": {
+            "type": "object",
+            "properties": {
+                "clientID": {
+                    "type": "string"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "target_method": {
+                    "type": "string"
+                },
+                "target_uri": {
+                    "type": "string"
+                },
+                "userID": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "ladon.Conditions": {
+            "type": "object",
+            "additionalProperties": {}
+        },
+        "ladon.Context": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "ladon.DefaultPolicy": {
+            "type": "object",
+            "properties": {
+                "actions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "conditions": {
+                    "$ref": "#/definitions/ladon.Conditions"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "effect": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "resources": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "subjects": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "ladon.Request": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "Action is the action that is requested on the resource.",
+                    "type": "string"
+                },
+                "context": {
+                    "description": "Context is the request's environmental context.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ladon.Context"
+                        }
+                    ]
+                },
+                "resource": {
+                    "description": "Resource is the resource that access is requested to.",
+                    "type": "string"
+                },
+                "subject": {
+                    "description": "Subejct is the subject that is requesting access.",
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

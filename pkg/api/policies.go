@@ -35,7 +35,23 @@ func init() {
 }
 
 func PoliciesEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
-	router.GET(resourceLocation, func(c *gin.Context) {
+	router.GET(resourceLocation, policiesGetHandler(guard))
+	router.DELETE(resourceLocation, policiesDeleteHandler(guard))
+	router.PUT(resourceLocation, policiesPutHandler(guard))
+	router.POST(resourceLocation, policiesPostHandler(guard))
+}
+
+// policiesGetHandler godoc
+// @Summary List policies
+// @Description Returns all Ladon policies, optionally filtered by subject.
+// @Tags policies
+// @Produce json
+// @Param subject query string false "Filter policies by subject"
+// @Success 200 {array} ladon.DefaultPolicy
+// @Failure 500 {string} ErrorResponse
+// @Router /policies [get]
+func policiesGetHandler(guard *authorization.Guard) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		subject := c.Query("subject")
 
 		var (
@@ -54,9 +70,23 @@ func PoliciesEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, g
 		}
 
 		c.JSON(200, policies)
-	})
+	}
+}
 
-	router.DELETE(resourceLocation, func(c *gin.Context) {
+// policiesDeleteHandler godoc
+// @Summary Delete policies
+// @Description Deletes one or more policies by ID. IDs may be provided as a comma-separated query parameter and/or a JSON array in the request body.
+// @Tags policies
+// @Accept json
+// @Param ids query string false "Comma-separated list of policy IDs to delete"
+// @Param ids body []string false "List of policy IDs to delete"
+// @Success 204
+// @Failure 400 {string} ErrorResponse
+// @Failure 404 {string} ErrorResponse
+// @Failure 500 {string} ErrorResponse
+// @Router /policies [delete]
+func policiesDeleteHandler(guard *authorization.Guard) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		ids := []string{}
 		if idQuery := c.Query("ids"); idQuery != "" {
 			ids = append(ids, strings.Split(idQuery, ",")...)
@@ -91,9 +121,21 @@ func PoliciesEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, g
 		}
 
 		c.Status(204)
-	})
+	}
+}
 
-	router.PUT(resourceLocation, func(c *gin.Context) {
+// policiesPutHandler godoc
+// @Summary Create or update policies
+// @Description Creates new policies or updates existing ones. Existing policies are updated; unknown IDs are created.
+// @Tags policies
+// @Accept json
+// @Param policies body []ladon.DefaultPolicy true "List of policies to create or update"
+// @Success 204
+// @Failure 400 {string} ErrorResponse
+// @Failure 500 {string} ErrorResponse
+// @Router /policies [put]
+func policiesPutHandler(guard *authorization.Guard) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var policies []ladon.DefaultPolicy
 		if err := c.ShouldBindJSON(&policies); err != nil {
 			c.Error(errors.Join(model.ErrBadRequest, err))
@@ -114,9 +156,21 @@ func PoliciesEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, g
 		}
 
 		c.Status(204)
-	})
+	}
+}
 
-	router.POST(resourceLocation, func(c *gin.Context) {
+// policiesPostHandler godoc
+// @Summary Create new policies
+// @Description Creates a list of new Ladon policies. Returns an error if any policy ID already exists.
+// @Tags policies
+// @Accept json
+// @Param policies body []ladon.DefaultPolicy true "List of policies to create"
+// @Success 204
+// @Failure 400 {string} ErrorResponse
+// @Failure 500 {string} ErrorResponse
+// @Router /policies [post]
+func policiesPostHandler(guard *authorization.Guard) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var policies []ladon.DefaultPolicy
 		if err := c.ShouldBindJSON(&policies); err != nil {
 			c.Error(errors.Join(model.ErrBadRequest, err))
@@ -138,5 +192,5 @@ func PoliciesEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, g
 		}
 
 		c.Status(204)
-	})
+	}
 }
