@@ -17,9 +17,11 @@
 package util
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/SENERGY-Platform/authorization/pkg/log"
 )
 
 func NewLogger(handler http.Handler) *LoggerMiddleWare {
@@ -45,7 +47,7 @@ func (this *LoggerMiddleWare) log(request *http.Request, response *ResponseWrite
 	method := request.Method
 	path := request.URL
 	status := response.Status
-	log.Printf("[%v] %v %v %v\n", method, path, status, time.Since(t))
+	log.Logger.Info("request", slog.String("method", method), slog.String("path", path.String()), slog.Int("status", status), slog.Duration("duration", time.Since(t)))
 }
 
 type ResponseWriterWithStatusCodeLog struct {

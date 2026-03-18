@@ -18,15 +18,18 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/SENERGY-Platform/authorization/pkg/api/util"
-	"github.com/SENERGY-Platform/authorization/pkg/authorization"
-	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/julienschmidt/httprouter"
-	"github.com/ory/ladon"
-	"log"
+	"log/slog"
 	"net/http"
 	"runtime/debug"
 	"strings"
+
+	"github.com/SENERGY-Platform/authorization/pkg/api/util"
+	"github.com/SENERGY-Platform/authorization/pkg/authorization"
+	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	"github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
+	"github.com/julienschmidt/httprouter"
+	"github.com/ory/ladon"
 )
 
 const resourceLocation = "/policies"
@@ -63,8 +66,7 @@ func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err = json.NewEncoder(writer).Encode(policies)
 		if err != nil {
-			log.Println("ERROR:", err)
-			debug.PrintStack()
+			log.Logger.Error("could not encode policies", attributes.ErrorKey, err, slog.String("stack", string(debug.Stack())))
 		}
 	})
 

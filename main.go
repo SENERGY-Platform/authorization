@@ -19,16 +19,18 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/SENERGY-Platform/authorization/pkg"
-	"github.com/SENERGY-Platform/authorization/pkg/configuration"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/SENERGY-Platform/authorization/pkg"
+	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	_log "github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
 )
 
 func main() {
-
 	configLocation := flag.String("config", "config.json", "configuration file")
 	flag.Parse()
 
@@ -37,10 +39,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	_log.Init(config)
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	wg, err := pkg.Start(ctx, config)
 	if err != nil {
+		_log.Logger.Error("unable to start pkg", attributes.ErrorKey, err)
 		log.Fatal(err)
 	}
 
@@ -48,7 +53,7 @@ func main() {
 		shutdown := make(chan os.Signal, 1)
 		signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 		sig := <-shutdown
-		log.Println("received shutdown signal", sig)
+		_log.Logger.Info("received shutdown signal", "signal", sig.String())
 		cancel()
 	}()
 

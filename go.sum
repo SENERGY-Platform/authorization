@@ -8,6 +8,8 @@ github.com/Microsoft/hcsshim v0.12.0 h1:rbICA+XZFwrBef2Odk++0LjFvClNCJGRK+fsrP25
 github.com/Microsoft/hcsshim v0.12.0/go.mod h1:RZV12pcHCXQ42XnlQ3pz6FZfmrC1C+R4gaOHhRNML1g=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 h1:TngWCqHvy9oXAN6lEVMRuU21PR1EtLVZJmdB18Gu3Rw=
 github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8D7ML55dXQrVaamCz2vxCfdQBasLZfHKk=
+github.com/SENERGY-Platform/go-service-base/struct-logger v0.6.0 h1:DQNAPU1DI3XNyLaIGnHN9O0gZ7Q+tyOq/ZmAvbL/5gg=
+github.com/SENERGY-Platform/go-service-base/struct-logger v0.6.0/go.mod h1:z9cf8WOUMLoifRj5Tqts1MNe6QoPFq5Msxj899ZC11g=
 github.com/SENERGY-Platform/service-commons v0.0.0-20240813072046-91b3195dd8fc h1:FbGDfHiDukp8wD1w4YNxjwiDpSNkRUG+Ymq9jjz3Auc=
 github.com/SENERGY-Platform/service-commons v0.0.0-20240813072046-91b3195dd8fc/go.mod h1:1p2CQPNtler5leXqNgaOfr7DlgZUydrQlQYA97ycm4k=
 github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874 h1:N7oVaKyGp8bttX0bfZGmcGkjz7DLQXhAn3DNd3T0ous=

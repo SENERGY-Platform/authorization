@@ -18,12 +18,14 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
 	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	"github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
 	"github.com/julienschmidt/httprouter"
-	"log"
-	"net/http"
 )
 
 func init() {
@@ -48,7 +50,7 @@ func TestEndpoints(router *httprouter.Router, _ configuration.Config, _ util.Jwt
 			writer.WriteHeader(http.StatusBadRequest)
 			err = json.NewEncoder(writer).Encode(&errorResponse{Message: "Could not parse request"})
 			if err != nil {
-				log.Println("ERROR: " + err.Error())
+				log.Logger.Error("could not encode response", attributes.ErrorKey, err)
 			}
 			return
 		}
@@ -80,7 +82,7 @@ func TestEndpoints(router *httprouter.Router, _ configuration.Config, _ util.Jwt
 			Head:   head == nil,
 		})
 		if err != nil {
-			log.Println("ERROR: " + err.Error())
+			log.Logger.Error("could not encode response", attributes.ErrorKey, err)
 		}
 		return
 	})

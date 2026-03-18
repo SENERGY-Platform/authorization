@@ -38,6 +38,7 @@ type ConfigStruct struct {
 	PostgresDb          string   `json:"postgres_db"`
 	MemcachedUrls       []string `json:"memcached_urls"`
 	Debug               bool     `json:"debug"`
+	LogHandler          string   `json:"log_handler"`
 }
 
 type Config = *ConfigStruct

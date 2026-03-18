@@ -17,9 +17,10 @@
 package memcache
 
 import (
-	"log"
 	"strings"
 	"sync"
+
+	"github.com/SENERGY-Platform/authorization/pkg/log"
 
 	upstream "github.com/bradfitz/gomemcache/memcache"
 )
@@ -41,7 +42,7 @@ func New(servers []string) (*Memcache, error) {
 }
 
 func (m *Memcache) reconnect() error {
-	log.Println("(Re-)connecting to memcached")
+	log.Logger.Info("(Re-)connecting to memcached")
 	if m.mc != nil {
 		err := m.mc.Close()
 		if err != nil {

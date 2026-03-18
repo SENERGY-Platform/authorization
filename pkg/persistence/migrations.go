@@ -17,8 +17,9 @@
 package persistence
 
 import (
+	"github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
 	"github.com/ory/ladon"
-	"log"
 )
 
 func (this *Persistence) migration() (err error) {
@@ -38,7 +39,7 @@ func (this *Persistence) migration() (err error) {
 		err = this.ladon.Manager.Create(pol)
 	}
 	if err != nil {
-		log.Fatal("Could not create initial policy: ", err)
+		log.Logger.Error("Could not create initial policy", attributes.ErrorKey, err)
 		return err
 	}
 

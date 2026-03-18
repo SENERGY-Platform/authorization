@@ -18,13 +18,15 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
+	"net/http"
+
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
 	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	"github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
 	"github.com/julienschmidt/httprouter"
 	"github.com/ory/ladon"
-	"net/http"
 )
 
 func init() {
@@ -63,7 +65,7 @@ func AccessEndpoint(router *httprouter.Router, _ configuration.Config, _ util.Jw
 
 		err = json.NewEncoder(writer).Encode(message)
 		if err != nil {
-			fmt.Println("ERROR: " + err.Error())
+			log.Logger.Error("could not encode response", attributes.ErrorKey, err)
 		}
 	})
 

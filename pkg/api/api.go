@@ -18,7 +18,7 @@ package api
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"reflect"
 	"runtime"
@@ -28,6 +28,8 @@ import (
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
 	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	"github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
 	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
 	"github.com/julienschmidt/httprouter"
 )
@@ -36,20 +38,24 @@ var endpoints = []func(router *httprouter.Router, config configuration.Config, j
 
 // starts http server; if wg is not nil it will be set as done when the server is stopped
 func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config, guard *authorization.Guard) (err error) {
-	log.Println("start api")
+	log.Logger.Info("start api")
 	router := Router(config, guard)
 	server := &http.Server{Addr: ":" + config.ApiPort, Handler: router, WriteTimeout: 10 * time.Second, ReadTimeout: 2 * time.Second, ReadHeaderTimeout: 2 * time.Second}
 	wg.Add(1)
 	go func() {
-		log.Println("Listening on ", server.Addr)
+		log.Logger.Info("Listening on", slog.String("addr", server.Addr))
 		if err := server.ListenAndServe(); err != http.ErrServerClosed {
-			log.Println("ERROR: api server error", err)
-			log.Fatal(err)
+			log.Logger.Error("api server error", attributes.ErrorKey, err)
 		}
 	}()
 	go func() {
 		<-ctx.Done()
-		log.Println("DEBUG: api shutdown", server.Shutdown(context.Background()))
+		shutdownErr := server.Shutdown(context.Background())
+		if shutdownErr != nil {
+			log.Logger.Debug("api shutdown", slog.String(attributes.ErrorKey, shutdownErr.Error()))
+		} else {
+			log.Logger.Debug("api shutdown")
+		}
 		wg.Done()
 	}()
 	return nil
@@ -59,9 +65,9 @@ func Router(config configuration.Config, guard *authorization.Guard) http.Handle
 	jwt := util.NewJwt(config)
 	router := httprouter.New()
 	for _, e := range endpoints {
-		log.Println("add endpoints: " + runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name())
+		log.Logger.Info("add endpoints", slog.String("endpoint", runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name()))
 		e(router, config, jwt, guard)
 	}
-	log.Println("add logging and cors")
+	log.Logger.Info("add logging and cors")
 	return accesslog.New(util.NewCors(router))
 }

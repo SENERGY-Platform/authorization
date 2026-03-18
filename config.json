@@ -7,5 +7,6 @@
   "postgres_password": "",
   "postgres_db" : "",
   "memcached_urls": [],
-  "debug": true
+  "debug": true,
+  "log_handler": "json"
 }

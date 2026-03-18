@@ -18,9 +18,10 @@ package persistence
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 
+	"github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/ory/ladon"
 )
@@ -107,7 +108,7 @@ func (p *Persistence) IsAnyAllowed(r []ladon.Request) (err error) {
 		}
 		err = p.mc.Set(item)
 		if err != nil && (p.debounceMcError == nil || time.Now().Sub(*p.debounceMcError) > time.Minute) {
-			log.Println("WARN: Could not update cache: " + err.Error())
+			log.Logger.Warn("Could not update cache", attributes.ErrorKey, err)
 			now := time.Now()
 			p.debounceMcError = &now
 		}

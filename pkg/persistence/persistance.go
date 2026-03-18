@@ -20,19 +20,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/persistence/memcache"
-	"github.com/jmoiron/sqlx"
-	"github.com/ory/ladon"
-	"log"
+	"log/slog"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	"github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/authorization/pkg/persistence/memcache"
+	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
+	"github.com/jmoiron/sqlx"
+	"github.com/ory/ladon"
+
+	_ "github.com/lib/pq"
+
+	manager "github.com/ory/ladon/manager/sql"
 )
-
-import _ "github.com/lib/pq"
-
-import manager "github.com/ory/ladon/manager/sql"
 
 type Persistence struct {
 	db              *sqlx.DB
@@ -50,15 +53,15 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New(fmt.Sprint("panic during db init: ", r))
-			fmt.Println(string(debug.Stack()))
+			log.Logger.Error("panic during db init", slog.String("stack", string(debug.Stack())))
 		}
 	}()
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", config.PostgresHost, 5432, config.PostgresUser, config.PostgresPassword, config.PostgresDb)
 
 	db, err := sqlx.Open("postgres", psqlInfo)
 	if err != nil {
-		fmt.Println("error")
-		log.Fatalf("Could not connect to database: %s", err)
+		log.Logger.Error("Could not connect to database", attributes.ErrorKey, err)
+		return nil, err
 	}
 
 	warden := &ladon.Ladon{
@@ -72,7 +75,7 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 	s := manager.NewSQLManager(db, nil)
 	_, err = s.CreateSchemas("", "")
 	if err != nil {
-		log.Fatalf("Could not create postgres schema: %v", err)
+		log.Logger.Error("Could not create postgres schema", attributes.ErrorKey, err)
 		return result, err
 	}
 	wg.Add(1)
@@ -80,7 +83,7 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 		<-ctx.Done()
 		err = db.Close()
 		if err != nil {
-			log.Fatalf("Could not close DB connection: %v", err)
+			log.Logger.Error("Could not close DB connection", attributes.ErrorKey, err)
 		}
 		wg.Done()
 	}()

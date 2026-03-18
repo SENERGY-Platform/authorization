@@ -3,11 +3,13 @@ package util
 import (
 	"errors"
 	"fmt"
-	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/golang-jwt/jwt"
-	"log"
 	"net/http"
 	"strings"
+
+	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	"github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
+	"github.com/golang-jwt/jwt"
 )
 
 type Jwt struct {
@@ -45,7 +47,7 @@ func (this Jwt) Parse(token string) (username string, user string, roles []strin
 
 	if err != nil {
 		if this.config.Debug {
-			log.Println("DEBUG: unable to parse jwt: ", err)
+			log.Logger.Debug("unable to parse jwt", attributes.ErrorKey, err)
 		}
 		err = errors.New("unable to parse jwt")
 		return username, user, roles, clientId, err

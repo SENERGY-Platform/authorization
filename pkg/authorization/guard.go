@@ -18,13 +18,14 @@ package authorization
 
 import (
 	"errors"
-	"fmt"
-	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/persistence"
-	"github.com/ory/ladon"
 	"net/http"
 	"strings"
 	"sync"
+
+	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	"github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/authorization/pkg/persistence"
+	"github.com/ory/ladon"
 )
 
 type Request struct {
@@ -57,7 +58,7 @@ func (g *Guard) Authorize(checkR *Request) error {
 	if r.Action == http.MethodOptions {
 		// OPTIONS is allowed for authenticated users
 		if g.config.Debug {
-			fmt.Println("allowed OPTIONS")
+			log.Logger.Debug("allowed OPTIONS")
 		}
 		return nil
 	}
