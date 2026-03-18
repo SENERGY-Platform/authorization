@@ -17,15 +17,13 @@
 package api
 
 import (
-	"encoding/json"
-	"net/http"
+	"errors"
 
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
 	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/log"
-	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
-	"github.com/julienschmidt/httprouter"
+	"github.com/SENERGY-Platform/authorization/pkg/model"
+	"github.com/gin-gonic/gin"
 	"github.com/ory/ladon"
 )
 
@@ -38,23 +36,22 @@ type KongMessage struct {
 	Error  string `json:"error"`
 }
 
-func AccessEndpoint(router *httprouter.Router, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
-	router.GET("/access", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		writer.Header().Set("Content-Type", "application/json")
+func AccessEndpoint(router *gin.Engine, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
+	router.GET("/access", func(c *gin.Context) {
 		var ladonRequest ladon.Request
 
-		err := json.NewDecoder(request.Body).Decode(&ladonRequest)
+		err := c.ShouldBindJSON(&ladonRequest)
 		if err != nil {
-			writer.WriteHeader(400)
+			c.Error(errors.Join(model.ErrBadRequest, err))
 			return
 		}
 
 		var message KongMessage
-		err = guard.IsAllowed(&ladonRequest)
-		if err != nil {
+		authErr := guard.IsAllowed(&ladonRequest)
+		if authErr != nil {
 			message = KongMessage{
 				false,
-				err.Error(),
+				authErr.Error(),
 			}
 		} else {
 			message = KongMessage{
@@ -63,10 +60,7 @@ func AccessEndpoint(router *httprouter.Router, _ configuration.Config, _ util.Jw
 			}
 		}
 
-		err = json.NewEncoder(writer).Encode(message)
-		if err != nil {
-			log.Logger.Error("could not encode response", attributes.ErrorKey, err)
-		}
+		c.JSON(model.GetStatusCode(nil), message)
 	})
 
 }

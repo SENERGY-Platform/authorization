@@ -17,15 +17,13 @@
 package api
 
 import (
-	"encoding/json"
-	"net/http"
+	"errors"
 
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
 	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/log"
-	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
-	"github.com/julienschmidt/httprouter"
+	"github.com/SENERGY-Platform/authorization/pkg/model"
+	"github.com/gin-gonic/gin"
 )
 
 func init() {
@@ -41,26 +39,17 @@ type allowedResponse struct {
 	Allowed []bool `json:"allowed"`
 }
 
-func AllowedEndpoints(router *httprouter.Router, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
-	router.POST("/allowed", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		writer.Header().Set("Content-Type", "application/json")
+func AllowedEndpoints(router *gin.Engine, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
+	router.POST("/allowed", func(c *gin.Context) {
 		var allowedQuestions []allowedQuestion
-		err := json.NewDecoder(request.Body).Decode(&allowedQuestions)
+		err := c.ShouldBindJSON(&allowedQuestions)
 		if err != nil {
-			writer.WriteHeader(http.StatusBadRequest)
-			err = json.NewEncoder(writer).Encode(&errorResponse{Message: "Could not parse request"})
-			if err != nil {
-				log.Logger.Error("could not encode response", attributes.ErrorKey, err)
-			}
+			c.Error(errors.Join(model.ErrBadRequest, err))
 			return
 		}
-		username, userId, roles, clientId, err := jwt.ParseHeader(request.Header.Get("Authorization"))
+		username, userId, roles, clientId, err := jwt.ParseHeader(c.GetHeader("Authorization"))
 		if err != nil {
-			writer.WriteHeader(http.StatusUnauthorized)
-			err = json.NewEncoder(writer).Encode(&errorResponse{Message: err.Error()})
-			if err != nil {
-				log.Logger.Error("could not encode response", attributes.ErrorKey, err)
-			}
+			c.Error(errors.Join(model.GetError(401), err))
 			return
 		}
 
@@ -88,9 +77,6 @@ func AllowedEndpoints(router *httprouter.Router, _ configuration.Config, jwt uti
 			}
 		}
 
-		err = json.NewEncoder(writer).Encode(resp)
-		if err != nil {
-			log.Logger.Error("could not encode response", attributes.ErrorKey, err)
-		}
+		c.JSON(200, resp)
 	})
 }

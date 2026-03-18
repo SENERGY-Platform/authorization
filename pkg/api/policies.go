@@ -17,18 +17,14 @@
 package api
 
 import (
-	"encoding/json"
-	"log/slog"
-	"net/http"
-	"runtime/debug"
+	"errors"
 	"strings"
 
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
 	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/log"
-	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
-	"github.com/julienschmidt/httprouter"
+	"github.com/SENERGY-Platform/authorization/pkg/model"
+	"github.com/gin-gonic/gin"
 	"github.com/ory/ladon"
 )
 
@@ -38,127 +34,109 @@ func init() {
 	endpoints = append(endpoints, PoliciesEndpoints)
 }
 
-func PoliciesEndpoints(router *httprouter.Router, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
+func PoliciesEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
+	router.GET(resourceLocation, func(c *gin.Context) {
+		subject := c.Query("subject")
 
-	router.GET(resourceLocation, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		subject := request.URL.Query()["subject"]
-		var policies ladon.Policies
-		var err error
-		if len(subject) != 0 {
-			request := &ladon.Request{
-				Subject: subject[0],
-			}
+		var (
+			policies ladon.Policies
+			err      error
+		)
 
-			// filter for policies that matches the request
-			policies, err = guard.Persistence.FindRequestCandidates(request)
-			if err != nil {
-				http.Error(writer, "error at finding policies to the subject: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-
+		if subject != "" {
+			policies, err = guard.Persistence.FindRequestCandidates(&ladon.Request{Subject: subject})
 		} else {
 			policies, err = guard.Persistence.GetAll(1000, 0)
-			if err != nil {
-				http.Error(writer, "error at getting all policies: "+err.Error(), http.StatusInternalServerError)
-				return
-			}
 		}
-		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-		err = json.NewEncoder(writer).Encode(policies)
 		if err != nil {
-			log.Logger.Error("could not encode policies", attributes.ErrorKey, err, slog.String("stack", string(debug.Stack())))
+			c.Error(errors.Join(model.ErrInternalServerError, err))
+			return
 		}
+
+		c.JSON(200, policies)
 	})
 
-	router.DELETE(resourceLocation, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.DELETE(resourceLocation, func(c *gin.Context) {
 		ids := []string{}
-
-		idQuery := request.URL.Query()["ids"]
-		if len(idQuery) > 0 {
-			ids = append(ids, strings.Split(idQuery[0], ",")...)
+		if idQuery := c.Query("ids"); idQuery != "" {
+			ids = append(ids, strings.Split(idQuery, ",")...)
 		}
 
-		var bodyIds []string
-		err := json.NewDecoder(request.Body).Decode(&bodyIds)
-		if err == nil {
-			ids = append(ids, bodyIds...)
+		var bodyIDs []string
+		if err := c.ShouldBindJSON(&bodyIDs); err == nil {
+			ids = append(ids, bodyIDs...)
 		}
 
 		if len(ids) == 0 {
-			http.Error(writer, "expected policy id", http.StatusBadRequest)
+			c.Error(model.ErrBadRequest)
 			return
 		}
 
 		for _, id := range ids {
 			if id == "admin-all" {
-				http.Error(writer, "Will not delete policy admin-all: protected policy", http.StatusBadRequest)
+				c.Error(errors.Join(model.ErrBadRequest, errors.New("protected policy")))
 				return
 			}
-			_, err := guard.Persistence.Get(id)
-			if err != nil {
-				http.Error(writer, "policy with id "+id+" not found", http.StatusNotFound)
+			if _, err := guard.Persistence.Get(id); err != nil {
+				c.Error(errors.Join(model.ErrNotFound, err))
 				return
 			}
 		}
 
 		for _, id := range ids {
-			err := guard.Persistence.Delete(id)
-			if err != nil {
-				http.Error(writer, "error at deleting policy: "+err.Error(), http.StatusInternalServerError)
+			if err := guard.Persistence.Delete(id); err != nil {
+				c.Error(errors.Join(model.ErrInternalServerError, err))
 				return
 			}
 		}
 
-		writer.WriteHeader(204)
+		c.Status(204)
 	})
 
-	router.PUT(resourceLocation, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.PUT(resourceLocation, func(c *gin.Context) {
 		var policies []ladon.DefaultPolicy
-		err := json.NewDecoder(request.Body).Decode(&policies)
-		if err != nil {
-			http.Error(writer, "Could not parse policies: "+err.Error(), http.StatusBadRequest)
+		if err := c.ShouldBindJSON(&policies); err != nil {
+			c.Error(errors.Join(model.ErrBadRequest, err))
 			return
 		}
-		for _, pol := range policies {
-			_, err = guard.Persistence.Get(pol.ID)
+
+		for _, policy := range policies {
+			_, err := guard.Persistence.Get(policy.ID)
 			if err != nil {
-				err = guard.Persistence.Create(&pol)
+				err = guard.Persistence.Create(&policy)
 			} else {
-				err = guard.Persistence.Update(&pol)
+				err = guard.Persistence.Update(&policy)
 			}
 			if err != nil {
-				http.Error(writer, err.Error(), http.StatusInternalServerError)
+				c.Error(errors.Join(model.ErrInternalServerError, err))
 				return
 			}
 		}
 
-		writer.WriteHeader(204)
+		c.Status(204)
 	})
 
-	router.POST(resourceLocation, func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	router.POST(resourceLocation, func(c *gin.Context) {
 		var policies []ladon.DefaultPolicy
-		err := json.NewDecoder(request.Body).Decode(&policies)
-		if err != nil {
-			http.Error(writer, "Could not parse policies", http.StatusBadRequest)
+		if err := c.ShouldBindJSON(&policies); err != nil {
+			c.Error(errors.Join(model.ErrBadRequest, err))
 			return
 		}
 
-		for _, pol := range policies {
-			_, err = guard.Persistence.Get(pol.GetID())
-			if err == nil {
-				http.Error(writer, "Policy with id "+pol.GetID()+" already exists", http.StatusBadRequest)
-				return
-			}
-		}
-		for _, pol := range policies {
-			err = guard.Persistence.Create(&pol)
-			if err != nil {
-				http.Error(writer, err.Error(), http.StatusInternalServerError)
+		for _, policy := range policies {
+			if _, err := guard.Persistence.Get(policy.GetID()); err == nil {
+				c.Error(errors.Join(model.ErrBadRequest, errors.New("policy already exists")))
 				return
 			}
 		}
 
-		writer.WriteHeader(204)
+		for _, policy := range policies {
+			if err := guard.Persistence.Create(&policy); err != nil {
+				c.Error(errors.Join(model.ErrInternalServerError, err))
+				return
+			}
+		}
+
+		c.Status(204)
 	})
-
 }

@@ -17,15 +17,13 @@
 package api
 
 import (
-	"encoding/json"
-	"net/http"
+	"errors"
 
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
 	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/log"
-	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
-	"github.com/julienschmidt/httprouter"
+	"github.com/SENERGY-Platform/authorization/pkg/model"
+	"github.com/gin-gonic/gin"
 )
 
 func init() {
@@ -41,50 +39,39 @@ type TestResponse struct {
 	Head   bool `json:"HEAD"`
 }
 
-func TestEndpoints(router *httprouter.Router, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
-	router.POST("/test", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-		var checkR authorization.Request
-		err := json.NewDecoder(request.Body).Decode(&checkR)
-		if err != nil {
-			writer.WriteHeader(http.StatusBadRequest)
-			err = json.NewEncoder(writer).Encode(&errorResponse{Message: "Could not parse request"})
-			if err != nil {
-				log.Logger.Error("could not encode response", attributes.ErrorKey, err)
-			}
+func TestEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
+	router.POST("/test", func(c *gin.Context) {
+		var checkRequest authorization.Request
+		if err := c.ShouldBindJSON(&checkRequest); err != nil {
+			c.Error(errors.Join(model.ErrBadRequest, err))
 			return
 		}
 
-		checkR.TargetMethod = http.MethodGet
-		get := guard.Authorize(&checkR)
+		checkRequest.TargetMethod = "GET"
+		getErr := guard.Authorize(&checkRequest)
 
-		checkR.TargetMethod = http.MethodPost
-		post := guard.Authorize(&checkR)
+		checkRequest.TargetMethod = "POST"
+		postErr := guard.Authorize(&checkRequest)
 
-		checkR.TargetMethod = http.MethodPut
-		put := guard.Authorize(&checkR)
+		checkRequest.TargetMethod = "PUT"
+		putErr := guard.Authorize(&checkRequest)
 
-		checkR.TargetMethod = http.MethodPatch
-		patch := guard.Authorize(&checkR)
+		checkRequest.TargetMethod = "PATCH"
+		patchErr := guard.Authorize(&checkRequest)
 
-		checkR.TargetMethod = http.MethodDelete
-		del := guard.Authorize(&checkR)
+		checkRequest.TargetMethod = "DELETE"
+		deleteErr := guard.Authorize(&checkRequest)
 
-		checkR.TargetMethod = http.MethodHead
-		head := guard.Authorize(&checkR)
+		checkRequest.TargetMethod = "HEAD"
+		headErr := guard.Authorize(&checkRequest)
 
-		err = json.NewEncoder(writer).Encode(TestResponse{
-			Get:    get == nil,
-			Post:   post == nil,
-			Put:    put == nil,
-			Patch:  patch == nil,
-			Delete: del == nil,
-			Head:   head == nil,
+		c.JSON(200, TestResponse{
+			Get:    getErr == nil,
+			Post:   postErr == nil,
+			Put:    putErr == nil,
+			Patch:  patchErr == nil,
+			Delete: deleteErr == nil,
+			Head:   headErr == nil,
 		})
-		if err != nil {
-			log.Logger.Error("could not encode response", attributes.ErrorKey, err)
-		}
-		return
 	})
-
 }

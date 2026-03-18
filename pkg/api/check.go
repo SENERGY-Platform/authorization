@@ -17,15 +17,13 @@
 package api
 
 import (
-	"encoding/json"
-	"net/http"
+	"errors"
 
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
 	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
-	"github.com/SENERGY-Platform/authorization/pkg/log"
-	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
-	"github.com/julienschmidt/httprouter"
+	"github.com/SENERGY-Platform/authorization/pkg/model"
+	"github.com/gin-gonic/gin"
 )
 
 func init() {
@@ -52,26 +50,17 @@ type headers struct {
 	Authorization string `json:"authorization"`
 }
 
-func CheckEndpoints(router *httprouter.Router, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
-	router.POST("/check", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+func CheckEndpoints(router *gin.Engine, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
+	router.POST("/check", func(c *gin.Context) {
 		var checkR checkRequest
-		err := json.NewDecoder(request.Body).Decode(&checkR)
+		err := c.ShouldBindJSON(&checkR)
 		if err != nil {
-			writer.WriteHeader(http.StatusBadRequest)
-			err = json.NewEncoder(writer).Encode(&errorResponse{Message: "Could not parse request"})
-			if err != nil {
-				log.Logger.Error("could not encode response", attributes.ErrorKey, err)
-			}
+			c.Error(errors.Join(model.ErrBadRequest, err))
 			return
 		}
 		username, userId, roles, clientId, err := jwt.ParseHeader(checkR.Headers.Authorization)
 		if err != nil {
-			writer.WriteHeader(http.StatusUnauthorized)
-			err = json.NewEncoder(writer).Encode(&errorResponse{Message: err.Error()})
-			if err != nil {
-				log.Logger.Error("could not encode response", attributes.ErrorKey, err)
-			}
+			c.Error(errors.Join(model.GetError(401), err))
 			return
 		}
 
@@ -81,7 +70,7 @@ func CheckEndpoints(router *httprouter.Router, _ configuration.Config, jwt util.
 			Roles:    roles,
 			ClientId: clientId,
 		}
-		err = guard.Authorize(&authorization.Request{
+		authErr := guard.Authorize(&authorization.Request{
 			UserId:       userId,
 			Roles:        roles,
 			Username:     username,
@@ -90,19 +79,12 @@ func CheckEndpoints(router *httprouter.Router, _ configuration.Config, jwt util.
 			TargetUri:    checkR.Headers.TargetUri,
 		})
 
-		if err == nil {
-			err = json.NewEncoder(writer).Encode(response)
-			if err != nil {
-				log.Logger.Error("could not encode response", attributes.ErrorKey, err)
-			}
+		if authErr == nil {
+			c.JSON(200, response)
 			return
 		}
 
-		writer.WriteHeader(http.StatusForbidden)
-		err = json.NewEncoder(writer).Encode(&errorResponse{Message: "Forbidden"})
-		if err != nil {
-			log.Logger.Error("could not encode response", attributes.ErrorKey, err)
-		}
+		c.Error(errors.Join(model.GetError(403), authErr))
 	})
 
 }

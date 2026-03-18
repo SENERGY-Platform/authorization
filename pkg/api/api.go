@@ -29,17 +29,36 @@ import (
 	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
 	"github.com/SENERGY-Platform/authorization/pkg/log"
+	"github.com/SENERGY-Platform/authorization/pkg/model"
+	gin_mw "github.com/SENERGY-Platform/gin-middleware"
 	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
-	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gin-contrib/requestid"
+	"github.com/gin-gonic/gin"
 )
 
-var endpoints = []func(router *httprouter.Router, config configuration.Config, jwt util.Jwt, guard *authorization.Guard){}
+var endpoints = []func(router *gin.Engine, config configuration.Config, jwt util.Jwt, guard *authorization.Guard){}
 
 // starts http server; if wg is not nil it will be set as done when the server is stopped
 func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config, guard *authorization.Guard) (err error) {
 	log.Logger.Info("start api")
-	router := Router(config, guard)
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	router.Use(
+		gin_mw.StructLoggerHandlerWithDefaultGenerators(
+			log.Logger.With(attributes.LogRecordTypeKey, attributes.HttpAccessLogRecordTypeVal),
+			attributes.Provider,
+			[]string{},
+			nil,
+		),
+		requestid.New(requestid.WithCustomHeaderStrKey("X-Request-ID")),
+		gin_mw.ErrorHandler(model.GetStatusCode, ", "),
+		gin_mw.StructRecoveryHandler(log.Logger, gin_mw.DefaultRecoveryFunc),
+	)
+	jwt := util.NewJwt(config)
+	for _, e := range endpoints {
+		log.Logger.Info("add endpoint", "name", runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name())
+		e(router, config, jwt, guard)
+	}
 	server := &http.Server{Addr: ":" + config.ApiPort, Handler: router, WriteTimeout: 10 * time.Second, ReadTimeout: 2 * time.Second, ReadHeaderTimeout: 2 * time.Second}
 	wg.Add(1)
 	go func() {
@@ -59,15 +78,4 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 		wg.Done()
 	}()
 	return nil
-}
-
-func Router(config configuration.Config, guard *authorization.Guard) http.Handler {
-	jwt := util.NewJwt(config)
-	router := httprouter.New()
-	for _, e := range endpoints {
-		log.Logger.Info("add endpoints", slog.String("endpoint", runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name()))
-		e(router, config, jwt, guard)
-	}
-	log.Logger.Info("add logging and cors")
-	return accesslog.New(util.NewCors(router))
 }
