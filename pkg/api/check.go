@@ -22,6 +22,7 @@ import (
 	"github.com/SENERGY-Platform/authorization/pkg/api/util"
 	"github.com/SENERGY-Platform/authorization/pkg/authorization"
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
+	"github.com/SENERGY-Platform/authorization/pkg/log"
 	"github.com/SENERGY-Platform/authorization/pkg/model"
 	"github.com/gin-gonic/gin"
 )
@@ -76,6 +77,11 @@ func checkHandler(jwt util.Jwt, guard *authorization.Guard) gin.HandlerFunc {
 		}
 		username, userId, roles, clientId, err := jwt.ParseHeader(checkR.Headers.Authorization)
 		if err != nil {
+			log.Logger.Warn("Authorization failed (401)",
+				"token", checkR.Headers.Authorization,
+				"targetMethod", checkR.Headers.TargetMethod,
+				"targetUri", checkR.Headers.TargetUri,
+			)
 			c.Error(errors.Join(model.GetError(401), err))
 			return
 		}
@@ -99,6 +105,15 @@ func checkHandler(jwt util.Jwt, guard *authorization.Guard) gin.HandlerFunc {
 			c.JSON(200, response)
 			return
 		}
+
+		log.Logger.Warn("Authorization failed (403)",
+			"userId", userId,
+			"roles", roles,
+			"username", username,
+			"clientId", clientId,
+			"targetMethod", checkR.Headers.TargetMethod,
+			"targetUri", checkR.Headers.TargetUri,
+		)
 
 		c.Error(errors.Join(model.GetError(403), authErr))
 	}

@@ -38,6 +38,25 @@ import (
 
 var endpoints = []func(router *gin.Engine, config configuration.Config, jwt util.Jwt, guard *authorization.Guard){}
 
+func ErrorHandler(f func(error) int, sep string) gin.HandlerFunc {
+	return func(gc *gin.Context) {
+		gc.Next()
+		if !gc.IsAborted() && len(gc.Errors) > 0 {
+			var errs []string
+			for _, e := range gc.Errors {
+				if sc := f(e); sc != 0 {
+					gc.Status(sc)
+				}
+				errs = append(errs, e.Error())
+			}
+			if gc.Writer.Status() < 400 {
+				gc.Status(http.StatusInternalServerError)
+			}
+			gc.JSON(-1, map[string]any{"errors": errs})
+		}
+	}
+}
+
 // Start godoc
 // @title Authorization API
 // @description Allows definition of policies and checking of access rights.
@@ -57,7 +76,7 @@ func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config,
 			nil,
 		),
 		requestid.New(requestid.WithCustomHeaderStrKey("X-Request-ID")),
-		gin_mw.ErrorHandler(model.GetStatusCode, ", "),
+		ErrorHandler(model.GetStatusCode, ", "),
 		gin_mw.StructRecoveryHandler(log.Logger, gin_mw.DefaultRecoveryFunc),
 	)
 	jwt := util.NewJwt(config)
