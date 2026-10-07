@@ -30,11 +30,11 @@ import (
 type ConfigStruct struct {
 	ApiPort             string   `json:"api_port"`
 	JwtSigningMethod    string   `json:"jwt_signing_method"` //"rsa", "hmac"
-	JwtSigningKey       string   `json:"jwt_signing_key"`
-	SqlConnectionString string   `json:"sql_connection_string"`
+	JwtSigningKey       string   `json:"jwt_signing_key" config:"secret"`
+	SqlConnectionString string   `json:"sql_connection_string" config:"secret"`
 	PostgresHost        string   `json:"postgres_host"`
 	PostgresUser        string   `json:"postgres_user"`
-	PostgresPassword    string   `json:"postgres_password"`
+	PostgresPassword    string   `json:"postgres_password" config:"secret"`
 	PostgresDb          string   `json:"postgres_db"`
 	MemcachedUrls       []string `json:"memcached_urls"`
 	Debug               bool     `json:"debug"`
@@ -80,10 +80,13 @@ func HandleEnvironmentVars(config Config) {
 	configType := configValue.Type()
 	for index := 0; index < configType.NumField(); index++ {
 		fieldName := configType.Field(index).Name
+		fieldConfig := configType.Field(index).Tag.Get("config")
 		envName := fieldNameToEnvName(fieldName)
 		envValue := os.Getenv(envName)
 		if envValue != "" {
-			fmt.Println("use environment variable: ", envName, " = ", envValue)
+			if !strings.Contains(fieldConfig, "secret") {
+				fmt.Println("use environment variable: ", envName, " = ", envValue)
+			}
 			if configValue.FieldByName(fieldName).Kind() == reflect.Int64 {
 				i, _ := strconv.ParseInt(envValue, 10, 64)
 				configValue.FieldByName(fieldName).SetInt(i)
