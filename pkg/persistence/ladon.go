@@ -17,6 +17,8 @@
 package persistence
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"time"
 
@@ -76,11 +78,10 @@ func (p *Persistence) FindRequestCandidates(r *ladon.Request) (ladon.Policies, e
 func (p *Persistence) IsAnyAllowed(r []ladon.Request) (err error) {
 	b := make([]string, len(r))
 	for i := range r {
-		bytes, err := json.Marshal(r[i])
+		b[i], err = cacheKey(r[i])
 		if err != nil {
 			return err
 		}
-		b[i] = string(bytes)
 	}
 
 	items, err := p.mc.GetMulti(b)
@@ -122,4 +123,15 @@ func (p *Persistence) IsAnyAllowed(r []ladon.Request) (err error) {
 
 func (p *Persistence) IsAllowed(r *ladon.Request) (err error) {
 	return p.IsAnyAllowed([]ladon.Request{*r})
+}
+
+// cacheKey hashes the request, because memcached rejects keys longer than 250 bytes or
+// containing spaces, and a single rejected key fails a whole GetMulti.
+func cacheKey(r ladon.Request) (string, error) {
+	b, err := json.Marshal(r)
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:]), nil
 }
