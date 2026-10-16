@@ -77,8 +77,11 @@ func checkHandler(jwt util.Jwt, guard *authorization.Guard) gin.HandlerFunc {
 		}
 		username, userId, roles, clientId, err := jwt.ParseHeader(checkR.Headers.Authorization)
 		if err != nil {
+			scheme, sub, exp := util.DescribeHeader(checkR.Headers.Authorization)
 			log.Logger.Warn("Authorization failed (401)",
-				"token", checkR.Headers.Authorization,
+				"authScheme", scheme,
+				"sub", sub,
+				"exp", exp,
 				"targetMethod", checkR.Headers.TargetMethod,
 				"targetUri", checkR.Headers.TargetUri,
 			)

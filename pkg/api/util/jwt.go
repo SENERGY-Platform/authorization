@@ -114,7 +114,26 @@ func (this Jwt) ParseHeader(header string) (username string, user string, roles 
 func removeType(header string) (jwt string, err error) {
 	authParts := strings.Split(header, " ")
 	if len(authParts) != 2 {
-		return "", errors.New("expect auth string format like '<type> <token>', but got " + header)
+		return "", errors.New("expect auth string format like '<type> <token>'")
 	}
 	return strings.Join(authParts[1:], " "), err
+}
+
+// DescribeHeader returns what of an Authorization header may be logged: the
+// scheme and, for an unverified JWT, its sub and exp. Never the credential.
+func DescribeHeader(header string) (scheme string, sub string, exp any) {
+	scheme, token, found := strings.Cut(header, " ")
+	if !found {
+		return "", "", nil
+	}
+	// A malformed header may carry the credential in the first part.
+	if !strings.EqualFold(scheme, "Bearer") && !strings.EqualFold(scheme, "Basic") {
+		return "other", "", nil
+	}
+	claims := jwt.MapClaims{}
+	if _, _, err := new(jwt.Parser).ParseUnverified(token, claims); err != nil {
+		return scheme, "", nil
+	}
+	sub, _ = claims["sub"].(string)
+	return scheme, sub, claims["exp"]
 }
