@@ -3,7 +3,7 @@ module github.com/SENERGY-Platform/authorization
 go 1.26.1
 
 require (
-	github.com/SENERGY-Platform/gin-middleware v0.14.1
+	github.com/SENERGY-Platform/gin-middleware v0.14.2
 	github.com/SENERGY-Platform/go-service-base/struct-logger v0.6.0
 	github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874
 	github.com/gin-contrib/requestid v1.0.5
