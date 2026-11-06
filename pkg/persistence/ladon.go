@@ -20,6 +20,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/SENERGY-Platform/authorization/pkg/log"
@@ -30,6 +31,12 @@ import (
 
 var bTrue byte = 1
 var bFalse byte = 0
+
+type decisionCache interface {
+	Set(item *memcache.Item) error
+	DeleteAll() error
+	GetMulti(keys []string) (map[string]*memcache.Item, error)
+}
 
 // Create persists the policy.
 func (p *Persistence) Create(policy ladon.Policy) error {
@@ -99,6 +106,11 @@ func (p *Persistence) IsAnyAllowed(r []ladon.Request) (err error) {
 
 	for i := range r {
 		ladonErr := p.ladon.IsAllowed(&r[i])
+		if ladonErr != nil && !isDecision(ladonErr) {
+			// Cached entries never expire, so a cached evaluation error would deny this request until the next policy change.
+			log.Logger.Error("Could not evaluate policy request", attributes.ErrorKey, ladonErr)
+			continue
+		}
 		item := &memcache.Item{
 			Key: b[i],
 		}
@@ -119,6 +131,11 @@ func (p *Persistence) IsAnyAllowed(r []ladon.Request) (err error) {
 	}
 
 	return ladon.ErrRequestDenied
+}
+
+// isDecision reports whether err is a verdict of the policies rather than a failure to evaluate them.
+func isDecision(err error) bool {
+	return errors.Is(err, ladon.ErrRequestDenied) || errors.Is(err, ladon.ErrRequestForcefullyDenied)
 }
 
 func (p *Persistence) IsAllowed(r *ladon.Request) (err error) {

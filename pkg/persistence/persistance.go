@@ -40,7 +40,7 @@ import (
 type Persistence struct {
 	db              *sqlx.DB
 	ladon           *ladon.Ladon
-	mc              *memcache.Memcache
+	mc              decisionCache
 	debounceMcError *time.Time
 }
 
