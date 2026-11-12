@@ -32,7 +32,7 @@ var validMethods = map[string][]string{
 func (this Jwt) Parse(token string) (username string, user string, roles []string, clientId string, err error) {
 	// An unknown signing method yields an empty, non-nil list, which rejects every alg.
 	methods := append([]string{}, validMethods[this.config.JwtSigningMethod]...)
-	// WithIssuedAt keeps the iat check that jwt v3 applied by default.
+	// WithIssuedAt keeps the iat check that jwt v3 applied by default; a token without exp would never expire.
 	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		switch this.config.JwtSigningMethod {
@@ -52,7 +52,7 @@ func (this Jwt) Parse(token string) (username string, user string, roles []strin
 			return []byte(this.config.JwtSigningKey), nil
 		}
 		return nil, fmt.Errorf("unknown jwt signing method in config: %q", this.config.JwtSigningMethod)
-	}, jwt.WithValidMethods(methods), jwt.WithIssuedAt())
+	}, jwt.WithValidMethods(methods), jwt.WithIssuedAt(), jwt.WithExpirationRequired())
 
 	if err != nil {
 		if this.config.Debug {

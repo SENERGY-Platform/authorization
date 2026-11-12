@@ -72,6 +72,8 @@ func TestJwtParse(t *testing.T) {
 	futureIat["iat"] = time.Now().Add(time.Hour).Unix()
 	noAzp := testClaims(time.Now().Add(time.Hour))
 	delete(noAzp, "azp")
+	noExp := testClaims(time.Now().Add(time.Hour))
+	delete(noExp, "exp")
 
 	cases := []struct {
 		name    string
@@ -89,6 +91,7 @@ func TestJwtParse(t *testing.T) {
 		{"PS256", "rsa", string(publicPem), sign(t, jwt.SigningMethodPS256, valid, key), true},
 		{"foreign RSA key", "rsa", string(publicPem), sign(t, jwt.SigningMethodRS256, valid, otherKey), true},
 		{"expired", "rsa", string(publicPem), sign(t, jwt.SigningMethodRS256, testClaims(time.Now().Add(-time.Minute)), key), true},
+		{"missing exp", "rsa", string(publicPem), sign(t, jwt.SigningMethodRS256, noExp, key), true},
 		{"issued in the future", "rsa", string(publicPem), sign(t, jwt.SigningMethodRS256, futureIat, key), true},
 		{"missing azp", "rsa", string(publicPem), sign(t, jwt.SigningMethodRS256, noAzp, key), true},
 		{"valid HS256 under hmac", "hmac", "hmac-secret", sign(t, jwt.SigningMethodHS256, valid, []byte("hmac-secret")), false},
