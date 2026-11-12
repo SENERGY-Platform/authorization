@@ -30,7 +30,7 @@ import (
 	"github.com/SENERGY-Platform/authorization/pkg/log"
 	"github.com/SENERGY-Platform/authorization/pkg/model"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func TestCheckUnauthorizedKeepsCredentialOutOfLogAndResponse(t *testing.T) {

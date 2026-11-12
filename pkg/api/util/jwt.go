@@ -9,7 +9,7 @@ import (
 	"github.com/SENERGY-Platform/authorization/pkg/configuration"
 	"github.com/SENERGY-Platform/authorization/pkg/log"
 	"github.com/SENERGY-Platform/go-service-base/struct-logger/attributes"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type Jwt struct {
@@ -23,7 +23,16 @@ func NewJwt(config configuration.Config) Jwt {
 const PEM_BEGIN = "-----BEGIN PUBLIC KEY-----"
 const PEM_END = "-----END PUBLIC KEY-----"
 
+// Signing algorithms accepted per configured signing method; a token naming any other alg is rejected before key lookup.
+var validMethods = map[string][]string{
+	"rsa":  {jwt.SigningMethodRS256.Alg(), jwt.SigningMethodRS384.Alg(), jwt.SigningMethodRS512.Alg()},
+	"hmac": {jwt.SigningMethodHS256.Alg(), jwt.SigningMethodHS384.Alg(), jwt.SigningMethodHS512.Alg()},
+}
+
 func (this Jwt) Parse(token string) (username string, user string, roles []string, clientId string, err error) {
+	// An unknown signing method yields an empty, non-nil list, which rejects every alg.
+	methods := append([]string{}, validMethods[this.config.JwtSigningMethod]...)
+	// WithIssuedAt keeps the iat check that jwt v3 applied by default.
 	jwtToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		switch this.config.JwtSigningMethod {
@@ -42,8 +51,8 @@ func (this Jwt) Parse(token string) (username string, user string, roles []strin
 			}
 			return []byte(this.config.JwtSigningKey), nil
 		}
-		return "", nil
-	})
+		return nil, fmt.Errorf("unknown jwt signing method in config: %q", this.config.JwtSigningMethod)
+	}, jwt.WithValidMethods(methods), jwt.WithIssuedAt())
 
 	if err != nil {
 		if this.config.Debug {
@@ -131,7 +140,7 @@ func DescribeHeader(header string) (scheme string, sub string, exp any) {
 		return "other", "", nil
 	}
 	claims := jwt.MapClaims{}
-	if _, _, err := new(jwt.Parser).ParseUnverified(token, claims); err != nil {
+	if _, _, err := jwt.NewParser().ParseUnverified(token, claims); err != nil {
 		return scheme, "", nil
 	}
 	sub, _ = claims["sub"].(string)
