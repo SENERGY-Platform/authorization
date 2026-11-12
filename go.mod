@@ -3,7 +3,7 @@ module github.com/SENERGY-Platform/authorization
 go 1.26.1
 
 require (
-	github.com/SENERGY-Platform/gin-middleware v0.14.2
+	github.com/SENERGY-Platform/gin-middleware v0.14.4
 	github.com/SENERGY-Platform/go-service-base/struct-logger v0.6.0
 	github.com/bradfitz/gomemcache v0.0.0-20230905024940-24af94b03874
 	github.com/gin-contrib/requestid v1.0.5
@@ -20,7 +20,7 @@ require (
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/SENERGY-Platform/service-commons v0.0.0-20260821114734-3e4578ac2358 // indirect
+	github.com/SENERGY-Platform/service-commons v0.0.0-20261112092203-c8689838acc5 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.1 // indirect
 	github.com/bytedance/sonic/loader v0.5.1 // indirect
@@ -40,7 +40,6 @@ require (
 	github.com/go-playground/validator/v10 v10.30.2 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
