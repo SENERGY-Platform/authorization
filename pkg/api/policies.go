@@ -34,21 +34,24 @@ func init() {
 	endpoints = append(endpoints, PoliciesEndpoints)
 }
 
-func PoliciesEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
-	router.GET(resourceLocation, policiesGetHandler(guard))
-	router.DELETE(resourceLocation, policiesDeleteHandler(guard))
-	router.PUT(resourceLocation, policiesPutHandler(guard))
-	router.POST(resourceLocation, policiesPostHandler(guard))
+func PoliciesEndpoints(router *gin.Engine, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
+	router.GET(resourceLocation, requireAdmin(jwt, policiesGetHandler(guard)))
+	router.DELETE(resourceLocation, requireAdmin(jwt, policiesDeleteHandler(guard)))
+	router.PUT(resourceLocation, requireAdmin(jwt, policiesPutHandler(guard)))
+	router.POST(resourceLocation, requireAdmin(jwt, policiesPostHandler(guard)))
 }
 
 // policiesGetHandler godoc
 // @Summary List policies
-// @Description Returns all Ladon policies, optionally filtered by subject.
+// @Description Returns all Ladon policies, optionally filtered by subject. Requires the realm role admin.
 // @Tags policies
 // @Produce json
 // @Param subject query string false "Filter policies by subject"
 // @Success 200 {array} ladon.DefaultPolicy
+// @Failure 401 {string} ErrorResponse
+// @Failure 403 {string} ErrorResponse
 // @Failure 500 {string} ErrorResponse
+// @Security Bearer
 // @Router /policies [get]
 func policiesGetHandler(guard *authorization.Guard) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -75,15 +78,18 @@ func policiesGetHandler(guard *authorization.Guard) gin.HandlerFunc {
 
 // policiesDeleteHandler godoc
 // @Summary Delete policies
-// @Description Deletes one or more policies by ID. IDs may be provided as a comma-separated query parameter and/or a JSON array in the request body.
+// @Description Deletes one or more policies by ID. IDs may be provided as a comma-separated query parameter and/or a JSON array in the request body. Requires the realm role admin.
 // @Tags policies
 // @Accept json
 // @Param ids query string false "Comma-separated list of policy IDs to delete"
 // @Param ids body []string false "List of policy IDs to delete"
 // @Success 204
 // @Failure 400 {string} ErrorResponse
+// @Failure 401 {string} ErrorResponse
+// @Failure 403 {string} ErrorResponse
 // @Failure 404 {string} ErrorResponse
 // @Failure 500 {string} ErrorResponse
+// @Security Bearer
 // @Router /policies [delete]
 func policiesDeleteHandler(guard *authorization.Guard) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -126,13 +132,16 @@ func policiesDeleteHandler(guard *authorization.Guard) gin.HandlerFunc {
 
 // policiesPutHandler godoc
 // @Summary Create or update policies
-// @Description Creates new policies or updates existing ones. Existing policies are updated; unknown IDs are created.
+// @Description Creates new policies or updates existing ones. Existing policies are updated; unknown IDs are created. Requires the realm role admin.
 // @Tags policies
 // @Accept json
 // @Param policies body []ladon.DefaultPolicy true "List of policies to create or update"
 // @Success 204
 // @Failure 400 {string} ErrorResponse
+// @Failure 401 {string} ErrorResponse
+// @Failure 403 {string} ErrorResponse
 // @Failure 500 {string} ErrorResponse
+// @Security Bearer
 // @Router /policies [put]
 func policiesPutHandler(guard *authorization.Guard) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -161,13 +170,16 @@ func policiesPutHandler(guard *authorization.Guard) gin.HandlerFunc {
 
 // policiesPostHandler godoc
 // @Summary Create new policies
-// @Description Creates a list of new Ladon policies. Returns an error if any policy ID already exists.
+// @Description Creates a list of new Ladon policies. Returns an error if any policy ID already exists. Requires the realm role admin.
 // @Tags policies
 // @Accept json
 // @Param policies body []ladon.DefaultPolicy true "List of policies to create"
 // @Success 204
 // @Failure 400 {string} ErrorResponse
+// @Failure 401 {string} ErrorResponse
+// @Failure 403 {string} ErrorResponse
 // @Failure 500 {string} ErrorResponse
+// @Security Bearer
 // @Router /policies [post]
 func policiesPostHandler(guard *authorization.Guard) gin.HandlerFunc {
 	return func(c *gin.Context) {

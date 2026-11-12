@@ -139,7 +139,7 @@ paths:
       consumes:
       - application/json
       description: Evaluates a Ladon policy request and returns whether access is
-        allowed.
+        allowed. Requires the realm role admin.
       parameters:
       - description: Ladon access request
         in: body
@@ -158,6 +158,16 @@ paths:
           description: Bad Request
           schema:
             type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+      security:
+      - Bearer: []
       summary: Check access via Ladon policy
       tags:
       - access
@@ -251,7 +261,8 @@ paths:
       consumes:
       - application/json
       description: Deletes one or more policies by ID. IDs may be provided as a comma-separated
-        query parameter and/or a JSON array in the request body.
+        query parameter and/or a JSON array in the request body. Requires the realm
+        role admin.
       parameters:
       - description: Comma-separated list of policy IDs to delete
         in: query
@@ -271,6 +282,14 @@ paths:
           description: Bad Request
           schema:
             type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
         "404":
           description: Not Found
           schema:
@@ -279,11 +298,14 @@ paths:
           description: Internal Server Error
           schema:
             type: string
+      security:
+      - Bearer: []
       summary: Delete policies
       tags:
       - policies
     get:
-      description: Returns all Ladon policies, optionally filtered by subject.
+      description: Returns all Ladon policies, optionally filtered by subject. Requires
+        the realm role admin.
       parameters:
       - description: Filter policies by subject
         in: query
@@ -298,10 +320,20 @@ paths:
             items:
               $ref: '#/definitions/ladon.DefaultPolicy'
             type: array
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
         "500":
           description: Internal Server Error
           schema:
             type: string
+      security:
+      - Bearer: []
       summary: List policies
       tags:
       - policies
@@ -309,7 +341,7 @@ paths:
       consumes:
       - application/json
       description: Creates a list of new Ladon policies. Returns an error if any policy
-        ID already exists.
+        ID already exists. Requires the realm role admin.
       parameters:
       - description: List of policies to create
         in: body
@@ -326,10 +358,20 @@ paths:
           description: Bad Request
           schema:
             type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
         "500":
           description: Internal Server Error
           schema:
             type: string
+      security:
+      - Bearer: []
       summary: Create new policies
       tags:
       - policies
@@ -337,7 +379,7 @@ paths:
       consumes:
       - application/json
       description: Creates new policies or updates existing ones. Existing policies
-        are updated; unknown IDs are created.
+        are updated; unknown IDs are created. Requires the realm role admin.
       parameters:
       - description: List of policies to create or update
         in: body
@@ -354,10 +396,20 @@ paths:
           description: Bad Request
           schema:
             type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
         "500":
           description: Internal Server Error
           schema:
             type: string
+      security:
+      - Bearer: []
       summary: Create or update policies
       tags:
       - policies
@@ -366,7 +418,8 @@ paths:
       consumes:
       - application/json
       description: Checks whether the given user is allowed to access the specified
-        endpoint for each HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD).
+        endpoint for each HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD). Requires
+        the realm role admin.
       parameters:
       - description: Authorization request with user info and target URI
         in: body
@@ -385,6 +438,16 @@ paths:
           description: Bad Request
           schema:
             type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "403":
+          description: Forbidden
+          schema:
+            type: string
+      security:
+      - Bearer: []
       summary: Test access for all HTTP methods
       tags:
       - test

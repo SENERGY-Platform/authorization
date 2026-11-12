@@ -39,19 +39,22 @@ type TestResponse struct {
 	Head   bool `json:"HEAD"`
 }
 
-func TestEndpoints(router *gin.Engine, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
-	router.POST("/test", testHandler(guard))
+func TestEndpoints(router *gin.Engine, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
+	router.POST("/test", requireAdmin(jwt, testHandler(guard)))
 }
 
 // testHandler godoc
 // @Summary Test access for all HTTP methods
-// @Description Checks whether the given user is allowed to access the specified endpoint for each HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD).
+// @Description Checks whether the given user is allowed to access the specified endpoint for each HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD). Requires the realm role admin.
 // @Tags test
 // @Accept json
 // @Produce json
 // @Param request body authorization.Request true "Authorization request with user info and target URI"
 // @Success 200 {object} TestResponse
 // @Failure 400 {string} ErrorResponse
+// @Failure 401 {string} ErrorResponse
+// @Failure 403 {string} ErrorResponse
+// @Security Bearer
 // @Router /test [post]
 func testHandler(guard *authorization.Guard) gin.HandlerFunc {
 	return func(c *gin.Context) {

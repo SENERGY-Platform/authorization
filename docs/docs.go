@@ -17,7 +17,12 @@ const docTemplate = `{
     "paths": {
         "/access": {
             "get": {
-                "description": "Evaluates a Ladon policy request and returns whether access is allowed.",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Evaluates a Ladon policy request and returns whether access is allowed. Requires the realm role admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -48,6 +53,18 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "type": "string"
                         }
@@ -184,7 +201,12 @@ const docTemplate = `{
         },
         "/policies": {
             "get": {
-                "description": "Returns all Ladon policies, optionally filtered by subject.",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Returns all Ladon policies, optionally filtered by subject. Requires the realm role admin.",
                 "produces": [
                     "application/json"
                 ],
@@ -210,6 +232,18 @@ const docTemplate = `{
                             }
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -219,7 +253,12 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Creates new policies or updates existing ones. Existing policies are updated; unknown IDs are created.",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Creates new policies or updates existing ones. Existing policies are updated; unknown IDs are created. Requires the realm role admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -251,6 +290,18 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -260,7 +311,12 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Creates a list of new Ladon policies. Returns an error if any policy ID already exists.",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Creates a list of new Ladon policies. Returns an error if any policy ID already exists. Requires the realm role admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -292,6 +348,18 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -301,7 +369,12 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Deletes one or more policies by ID. IDs may be provided as a comma-separated query parameter and/or a JSON array in the request body.",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Deletes one or more policies by ID. IDs may be provided as a comma-separated query parameter and/or a JSON array in the request body. Requires the realm role admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -338,6 +411,18 @@ const docTemplate = `{
                             "type": "string"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -355,7 +440,12 @@ const docTemplate = `{
         },
         "/test": {
             "post": {
-                "description": "Checks whether the given user is allowed to access the specified endpoint for each HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD).",
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Checks whether the given user is allowed to access the specified endpoint for each HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD). Requires the realm role admin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -386,6 +476,18 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "type": "string"
                         }

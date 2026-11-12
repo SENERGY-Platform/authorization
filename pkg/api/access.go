@@ -36,19 +36,22 @@ type KongMessage struct {
 	Error  string `json:"error"`
 }
 
-func AccessEndpoint(router *gin.Engine, _ configuration.Config, _ util.Jwt, guard *authorization.Guard) {
-	router.GET("/access", accessHandler(guard))
+func AccessEndpoint(router *gin.Engine, _ configuration.Config, jwt util.Jwt, guard *authorization.Guard) {
+	router.GET("/access", requireAdmin(jwt, accessHandler(guard)))
 }
 
 // accessHandler godoc
 // @Summary Check access via Ladon policy
-// @Description Evaluates a Ladon policy request and returns whether access is allowed.
+// @Description Evaluates a Ladon policy request and returns whether access is allowed. Requires the realm role admin.
 // @Tags access
 // @Accept json
 // @Produce json
 // @Param request body ladon.Request true "Ladon access request"
 // @Success 200 {object} KongMessage
 // @Failure 400 {string} ErrorResponse
+// @Failure 401 {string} ErrorResponse
+// @Failure 403 {string} ErrorResponse
+// @Security Bearer
 // @Router /access [get]
 func accessHandler(guard *authorization.Guard) gin.HandlerFunc {
 	return func(c *gin.Context) {
