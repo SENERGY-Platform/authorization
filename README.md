@@ -2,9 +2,9 @@
 - Go Web Server, to create access policies and ask for permissions of a subject 
 
 ## Endpoints
-- /policies -  manage access policies
+- /policies -  manage access policies; every method needs a token with the realm role admin (401 without, 403 without admin), as do /test and /access
 ```shell
-curl -i -X POST --url http://localhost:8080/policies
+curl -i -X POST -H 'Authorization: Bearer <admin token>' --url http://localhost:8080/policies
 [
     {
         	"Subject": "admin",
@@ -16,7 +16,7 @@ curl -i -X POST --url http://localhost:8080/policies
 ]
 ```
 ```shell
-curl -i -X PUT --url http://localhost:8080/policies
+curl -i -X PUT -H 'Authorization: Bearer <admin token>' --url http://localhost:8080/policies
 [
     {
         	"Subject": "admin",
@@ -32,15 +32,15 @@ curl -i -X PUT --url http://localhost:8080/policies
 ]
 ```
 ```shell
-curl -i -X GET --url http://localhost:8080/policies?subject=admin
+curl -i -X GET -H 'Authorization: Bearer <admin token>' --url http://localhost:8080/policies?subject=admin
 ```
 ```shell
-curl -i -X DELETE --url http://localhost:8080/policies?ids=id1,id2
+curl -i -X DELETE -H 'Authorization: Bearer <admin token>' --url http://localhost:8080/policies?ids=id1,id2
 ```
 
 - /check - ask for permission (used with kong middleman plugin)
 ```shell
-curl -i -X POST --url http://localhost:8080/access
+curl -i -X POST --url http://localhost:8080/check
 {
     "headers": {
         "target_method": "GET",
